@@ -2,48 +2,31 @@ public class StockTriggerHandlerHelper {
     private static Integer BASE_CHAR_NUMBER = 64;
     public void modifyStorageUnits(List<Stock__c> newList, Map<Id, Stock__c> oldmap) {
         Map<Id, Stock__c> modifiedStocksMap = new Map<Id, Stock__c>();
-        if (oldmap != null){
-            for (Stock__c stock : newList){
-                Stock__c oldStockValue = oldmap.get(stock.Id);
-                if ( stock.Length__c != oldStockValue.Length__c || 
-                    stock.Width__c != oldStockValue.Width__c ||
-                    stock.Height__c != oldStockValue.Height__c ){
-                        modifiedStocksMap.put(stock.Id, stock);
-                }
+        for (Stock__c stock : newList){
+            Stock__c oldStockValue = oldmap.get(stock.Id);
+            if ( stock.Length__c != oldStockValue.Length__c || 
+                stock.Width__c != oldStockValue.Width__c ||
+                stock.Height__c != oldStockValue.Height__c ){
+                    modifiedStocksMap.put(stock.Id, stock);
             }
         }
-        Map<Id, Storage_Unit__c> storageUnitsOfModifiedStocksMap = new Map<Id, Storage_Unit__c>([
-            SELECT Id
-                , Stock__c
-                , Name
-            FROM Storage_Unit__c
-            WHERE Stock__c IN :modifiedStocksMap.keySet()
-        ]);
 
-        List<Container__c> containersOnModifiedStocks = [
-            SELECT Id
-                , Storage_Unit__c
-                , Storage_Unit__r.Name
-                , Storage_Unit__r.Stock__c
-            FROM Container__c
-            WHERE Storage_Unit__c IN : storageUnitsOfModifiedStocksMap.keySet()
-        ];
+        createStorageUnits(modifiedStocksMap.values());
+    }
 
-        for(Container__c container : containersOnModifiedStocks) {
-            container.Position_Before_Stock_Modification__c = container.Storage_Unit__r.Name + '_' + 
-                container.Storage_Unit__r.Stock__c;
+    public void checkStockSizes(List<Stock__c> newList, Map<Id, Stock__c> oldmap) {
+        for (Stock__c stock : newList){
+            Stock__c oldStockValue = oldmap.get(stock.Id);
+            if ( stock.Length__c < oldStockValue.Length__c ){
+                stock.Length__c.addError('Can\'t be less than previous value');
+            }
+            if ( stock.Width__c < oldStockValue.Width__c ){
+                stock.Width__c.addError('Can\'t be less than previous value');
+            }
+            if ( stock.Height__c < oldStockValue.Height__c ){
+                stock.Height__c.addError('Can\'t be less than previous value');
+            }
         }
-        if(!containersOnModifiedStocks.isEmpty()){
-            update containersOnModifiedStocks;
-        }
-        if (!storageUnitsOfModifiedStocksMap.values().isEmpty()){
-            delete storageUnitsOfModifiedStocksMap.values();
-        }
-        if(!modifiedStocksMap.values().isEmpty()){
-            createStorageUnits(modifiedStocksMap.values());
-        }
-        // TODO: realize replace batch on stock change
-        // Database.execute(new ReplaceContainersOnStockChangeBatch(), 1);
     }
 
     public void createStorageUnits(List<Stock__c> newList) {
@@ -62,12 +45,13 @@ public class StockTriggerHandlerHelper {
                         storageUnit.Height_Position__c = height;
                         storageUnit.Name = lengthChar + widthNumber + heightValue;
                         storageUnit.Stock__c = stock.Id;
+                        storageUnit.Uniq_Id__c = storageUnit.Name + '_' + stock.Id;
                         storageUnitsToInsert.add(storageUnit);
                     }
                 }
             }
         }
-        insert storageUnitsToInsert;
+        upsert storageUnitsToInsert Uniq_Id__c;
     }
 
 }

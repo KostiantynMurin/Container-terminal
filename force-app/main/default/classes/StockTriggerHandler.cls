@@ -9,6 +9,7 @@ public class StockTriggerHandler extends TriggerHandler {
     
     protected override void beforeUpdate(){
         // if (skip) return;        
+        helper.checkStockSizes((List<Stock__c>) Trigger.new, (Map<Id, Stock__c>) Trigger.oldMap );
     }
     
     protected override void afterInsert(){
