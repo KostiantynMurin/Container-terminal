@@ -12,6 +12,9 @@ public class ContainerTriggerHandler extends TriggerHandler {
 
     protected override void beforeInsert() {
         // if (skip) return;
+        System.debug('before Insert');
+        helper.assignContacts((List<Container__c>) Trigger.new);
+        // helper.changeTheIncomeStatus((List<Container__c>) Trigger.new);
     }
 
     protected override void beforeUpdate() {
@@ -20,7 +23,9 @@ public class ContainerTriggerHandler extends TriggerHandler {
 
     protected override void afterInsert() {
         // if (skip) return;
-        helper.createContactsForContainers((List<Container__c>) Trigger.new);
+        System.debug('after Insert');
+
+        helper.runContactsRetrieve((List<Container__c>) Trigger.new);
     }
 
     protected override void afterUpdate() {
