@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>DML_Exception_Message</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>DML Exception Message</shortDescription>
+        <value>You have no permission to {0} this object: {1}</value>
+    </labels>
+    <labels>
+        <fullName>NewValueLessThanPrevious</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>NewValueLessThanPrevious</shortDescription>
+        <value>The new value cannot be less than the previous one!</value>
+    </labels>
+</CustomLabels>
