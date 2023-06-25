@@ -8,3 +8,9 @@
 .vscode
 
 coverage/
+
+.*ignore
+*.*-meta.xml
+*.sh
+*.log
+documentation/**
