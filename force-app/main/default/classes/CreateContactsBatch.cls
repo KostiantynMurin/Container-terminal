@@ -1,19 +1,22 @@
 public with sharing class CreateContactsBatch implements Database.Batchable<String>, Database.AllowsCallouts, Database.Stateful, Schedulable {
 
+    List<Container__c> containersWithoutContacts;
+    Map<String, Id> externalIdToContactIdMap = new Map<String, Id>();
+
     public Iterable<String> start(Database.BatchableContext bc) {
 
-        List<Container__c> containers = [
+        containersWithoutContacts = [
             SELECT Id
                 , External_Contact_Id__c
             FROM Container__c
             WHERE Contact__c = NULL
             AND External_Contact_Id__c != NULL
         ];
-        Set<String> externalIds = new Set<String>();
-        for(Container__c container : containers) {
-            externalIds.add(container.External_Contact_Id__c);
+        Set<String> contactsExternalIds = new Set<String>();
+        for(Container__c container : containersWithoutContacts) {
+            contactsExternalIds.add(container.External_Contact_Id__c);
         }
-        List<String> externalIdList = new List<String>(externalIds);
+        List<String> externalIdList = new List<String>(contactsExternalIds);
         return externalIdList;
 
     }
@@ -53,7 +56,11 @@ public with sharing class CreateContactsBatch implements Database.Batchable<Stri
 
         if(!contactsToInsert.isEmpty()){
             insert contactsToInsert;
+            for(Contact cont : contactsToInsert){
+                externalIdToContactIdMap.put(cont.External_Id__c, cont.Id);
+            }
         }
+
 
     }
 
@@ -61,7 +68,12 @@ public with sharing class CreateContactsBatch implements Database.Batchable<Stri
         Database.executeBatch(new CreateContactsBatch(), 80);
     }
 
-    public void finish(Database.BatchableContext BC) {}
+    public void finish(Database.BatchableContext BC) {
+        for( Container__c container : containersWithoutContacts){
+            container.Contact__c = externalIdToContactIdMap.get(container.External_Contact_Id__c);
+        }
+        update containersWithoutContacts;
+    }
 
 
     public class CreateContactsBatchException extends Exception {}

@@ -48,19 +48,6 @@ public class ContainerTriggerHandlerHelper {
         ];
         System.debug('scheduledJobs');
         System.debug(scheduledJobs);
-/* 
-        List<AsyncApexJob> jobs = [
-            SELECT ApexClassId
-                , Id
-                , JobItemsProcessed
-                , MethodName
-                , NumberOfErrors
-                , Status
-                , TotalJobItems
-            FROM AsyncApexJob
-            WHERE ApexClassId IN (SELECT Id FROM ApexClass WHERE Name = 'CreateContactsBatch')
-            // AND Status = 'Queued'
-        ]; */
         
         if(scheduledJobs.isEmpty()){
             System.scheduleBatch( new CreateContactsBatch(), 'ContactsBatch', 1);
