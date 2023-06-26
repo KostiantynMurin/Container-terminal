@@ -13,6 +13,7 @@ public class ContainerTriggerHandler extends TriggerHandler {
     protected override void beforeInsert() {
         // if (skip) return;
         System.debug('before Insert');
+        helper.setArrivingDay((List<Container__c>) Trigger.new);
         helper.assignContacts((List<Container__c>) Trigger.new);
         // helper.changeTheIncomeStatus((List<Container__c>) Trigger.new);
     }

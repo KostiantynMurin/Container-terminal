@@ -26,7 +26,14 @@ public class ContainerTriggerHandlerHelper {
         }
     }
 
-    // public void changeTheIncomeStatus(List<Container__c> newList){}
+    public void setArrivingDay(List<Container__c> newList){
+        for(Container__c container : newList){
+            if (container.Status__c == 'Arrived for client' || container.Status__c == 'Arrived for shipment') {
+                container.Arrival_Date__c = Date.today();
+            }
+        }
+        
+    }
 
     public void runContactsRetrieve(List<Container__c> newList) {
 
