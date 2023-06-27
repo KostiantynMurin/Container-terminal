@@ -73,6 +73,7 @@ public with sharing class CreateContactsBatch implements Database.Batchable<Stri
             container.Contact__c = externalIdToContactIdMap.get(container.External_Contact_Id__c);
         }
         update containersWithoutContacts;
+        Database.executeBatch(new DistributeContainersFromShipBatch(), 200);
     }
 
 
