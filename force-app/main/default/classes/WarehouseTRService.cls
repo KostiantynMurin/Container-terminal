@@ -44,13 +44,13 @@ public with sharing class WarehouseTRService {
                     }
                 }
             }
-
-            if (cellsToInsert.isEmpty()) {
-                return;
-            }
-
-            insert cellsToInsert;
         }
+
+        if (cellsToInsert.isEmpty()) {
+            return;
+        }
+
+        insert cellsToInsert;
     }
 
     public static void updateCellsNames(List<Warehouse__c> processingRecords) {
