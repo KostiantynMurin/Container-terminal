@@ -1,5 +1,8 @@
 public with sharing class WarehouseTRService {
 
+    //in order to convert width into the corresponding letter
+    public static final Integer ASCII_CHARACTER_BASE = 64;
+
     public static void createCells(List<Warehouse__c> processingRecords, Boolean isUpdate) {
 
         List<Cell__c> cellsToInsert = new List<Cell__c>();
@@ -26,7 +29,7 @@ public with sharing class WarehouseTRService {
                 for (Integer length = 1; length <= whLength; length++) {
                     for (Integer level = 1; level <= whLevel; level++) {
 
-                        String address = String.fromCharArray(new List<Integer>{64 + width}) + length + 'L' + level;
+                        String address = String.fromCharArray(new List<Integer>{ASCII_CHARACTER_BASE + width}) + length + 'L' + level;
 
                         if (isUpdate && addressesOfExistedCellsForCurWarehouse.contains(address)) {
                             continue;
