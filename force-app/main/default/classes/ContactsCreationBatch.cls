@@ -79,8 +79,7 @@ public class ContactsCreationBatch implements Database.Batchable<sObject>, Sched
     }
 
     public void finish(Database.BatchableContext bc) {
-        //TODO
-        //run container distribution job
+        Database.executeBatch(new ContainerDistributionBatch());
     }
 
     public class ContactsWrapper {

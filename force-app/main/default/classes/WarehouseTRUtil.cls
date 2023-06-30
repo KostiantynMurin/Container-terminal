@@ -1,5 +1,8 @@
 public with sharing class WarehouseTRUtil {
     
+    //in order to convert width into the corresponding letter
+    public static final Integer ASCII_CHARACTER_BASE = 64;
+
     public static Map<Id, Set<String>> getWarehouseIdToExistedCellAddressesMap(List<Warehouse__c> warehouses) {
 
         Map<Id, Set<String>> whIdToExistedCellAddressesMap = new Map<Id, Set<String>>();
@@ -42,5 +45,10 @@ public with sharing class WarehouseTRUtil {
         ];
 
         return cells;
+    }
+
+    public static String getCellAddress(Integer width, Integer length, Integer level) {
+        String address = String.fromCharArray(new List<Integer>{ASCII_CHARACTER_BASE + width}) + length + 'L' + level;
+        return address;
     }
 }
