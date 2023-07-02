@@ -61,4 +61,12 @@ public class ContainerTriggerHandlerHelper {
         }
     }
 
+    public void updateOnRelease(List<Container__c> newList, Map<Id, Container__c> oldMap) {
+        for(Container__c container : newList){
+            if(container.Status__c == 'Released' && oldMap.get(container.Id).Status__c != 'Released'){
+                container.Storage_Unit__c = null;
+            }
+        }
+    }
+
 }

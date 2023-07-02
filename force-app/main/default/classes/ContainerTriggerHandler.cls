@@ -20,6 +20,7 @@ public class ContainerTriggerHandler extends TriggerHandler {
 
     protected override void beforeUpdate() {
         // if (skip) return;
+        helper.updateOnRelease((List<Container__c>) Trigger.new, (Map<Id, Container__c>) Trigger.oldMap);
     }
 
     protected override void afterInsert() {
