@@ -1,12 +1,7 @@
 public class ContainerTriggerHandler extends TriggerHandler {
     // public static Boolean skip = false;
 
-
-    /* "for inserts, when a list of containers is added -> create contacts 
-    and run the batch to retrieve data for them
-    (if not new contacts is added -> run the incoming batch for containers)
-    on after update: check the status and clear the storage unit from container;
-     check for needed manipulations( run containers removing batch )"		 */
+    /*  check for needed manipulations( run containers removing batch )"		 */
 
     private ContainerTriggerHandlerHelper helper = new ContainerTriggerHandlerHelper();
 
@@ -15,7 +10,6 @@ public class ContainerTriggerHandler extends TriggerHandler {
         System.debug('before Insert');
         helper.setArrivingDay((List<Container__c>) Trigger.new);
         helper.assignContacts((List<Container__c>) Trigger.new);
-        // helper.changeTheIncomeStatus((List<Container__c>) Trigger.new);
     }
 
     protected override void beforeUpdate() {
@@ -32,6 +26,5 @@ public class ContainerTriggerHandler extends TriggerHandler {
 
     protected override void afterUpdate() {
         // if (skip) return;
-        // helper.modifyStorageUnits((List<Container__c>) Trigger.new, (Map<Id, Container__c>) Trigger.oldMap );
     }
 }
