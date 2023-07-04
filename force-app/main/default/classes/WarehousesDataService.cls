@@ -1,5 +1,17 @@
 public class WarehousesDataService {
     
+    private static String cellsQueryBase = 'SELECT Id'
+                                              + ', Address__c'
+                                              + ', Length__c'
+                                              + ', Width__c'
+                                              + ', Level__c'
+                                              + ', Warehouse__c'
+                                              + ', Warehouse__r.Length__c'
+                                              + ', Warehouse__r.Width__c'
+                                              + ', Warehouse__r.Level__c'
+                                              + ', (SELECT Id, Status__c FROM Containers__r)'
+                                        + ' FROM Cell__c'
+                                        + ' WHERE Warehouse__r.RecordTypeId =: rtId';
     private static WarehousesDataService instance;
     private Id bufferZoneRTId;
     private Id warehouseRTId;
@@ -46,7 +58,15 @@ public class WarehousesDataService {
         return warehouseIdToDataWrapperMap.get(currentCell.warehouseId).getPreviousCell(currentCell);
     }
 
+    public Integer getMaxLevelOfTheCurrentWherhouse() {
+        return warehouseIdToDataWrapperMap.get(currentWarehouseWithEmptyCells).getLevel();
+    }
+
     public void placeContainerToCell(Container__c container, CellDataWrapper cell) {
+
+        if (cell.cellId == bufferZoneCell.cellId) {
+            return;
+        }
 
         WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(currentWarehouseWithEmptyCells);
         wdw.placeContainerToCell(container, cell);
@@ -75,7 +95,8 @@ public class WarehousesDataService {
 
     private CellDataWrapper getBufferZoneCell() {
 
-        String query = 'SELECT Id FROM Cell__c WHERE Warehouse__r.RecordTypeId =: bufferZoneRTId';
+        String query = cellsQueryBase;
+        query = query.replace('rtId', 'bufferZoneRTId');
 
         List<Cell__c> bufferCells = Database.query(query);
 
@@ -96,18 +117,13 @@ public class WarehousesDataService {
 
     private Map<Id, WarehouseDataWrapper> getWarehouseIdToDataWrapperMap() {
 
+        String query = cellsQueryBase;
+        query = query.replace('rtId', 'warehouseRTId');
+        query += ' ORDER BY Warehouse__c, Address__c';
+
         Map<Id, List<Cell__c>> warehouseIdToCellsMap = new Map<Id, List<Cell__c>>();
 
-        for (Cell__c cell_i : [SELECT Id
-                                    , Address__c
-                                    , Warehouse__c
-                                    , Length__c
-                                    , Width__c
-                                    , Level__c
-                                    , (SELECT Id, Status__c FROM Containers__r)
-                               FROM Cell__c
-                               WHERE Warehouse__r.RecordTypeId =: warehouseRTId
-                               ORDER BY Warehouse__c, Address__c]) {
+        for (Cell__c cell_i : Database.query(query)) {
             
             if (!warehouseIdToCellsMap.containsKey(cell_i.Warehouse__c)) {
                 warehouseIdToCellsMap.put(cell_i.Warehouse__c, new List<Cell__c>());

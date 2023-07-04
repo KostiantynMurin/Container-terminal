@@ -1,6 +1,7 @@
 public class WarehouseDataWrapper {
     
     public Id warehouseId;
+    private Warehouse__c warehouse;
     private List<Id> emptyCellIdsOrderedList;
     private Map<Id, CellDataWrapper> cellIdToDataWrapperMap;
     private Map<Id, CellDataWrapper> emptyCellsMap;
@@ -22,6 +23,10 @@ public class WarehouseDataWrapper {
             
             if (cell_i.Warehouse__c != warehouseId) {
                 continue;
+            }
+
+            if (this.warehouse == null) {
+                this.warehouse = (Warehouse__c) cell_i.getSObject('Warehouse__r');
             }
 
             cellAddressToIdMap.put(cell_i.Address__c, cell_i.Id);
@@ -70,5 +75,17 @@ public class WarehouseDataWrapper {
         }
 
         return cellIdToDataWrapperMap.get(cellAddressToIdMap.get(addressOfThePreviousCell));
+    }
+
+    public Integer getLevel() {
+        return Integer.valueOf(warehouse.Level__c);
+    }
+
+    public Integer getWidth() {
+        return Integer.valueOf(warehouse.Width__c);
+    }
+
+    public Integer getLength() {
+        return Integer.valueOf(warehouse.Length__c);
     }
 }
