@@ -33,20 +33,38 @@ public class StockTriggerHandlerHelper {
         List<Storage_Unit__c> storageUnitsToInsert = new List<Storage_Unit__c>();
 
         for (Stock__c stock : newList) {
-            for( Integer length = 1; length <= stock.Length__c; length++){
-                for( Integer width = 1; width <= stock.Width__c; width++){
-                    for( Integer height = 1; height <= stock.Height__c; height++){
-                        Storage_Unit__c storageUnit = new Storage_Unit__c();
-                        String lengthChar = String.fromCharArray( new List<integer> { BASE_CHAR_NUMBER + length });
-                        String widthNumber = String.valueOf(width);
-                        String heightValue = 'L' + height;
-                        storageUnit.Length_Position__c = length;
-                        storageUnit.Width_Position__c = width;
-                        storageUnit.Height_Position__c = height;
-                        storageUnit.Name = lengthChar + widthNumber + heightValue;
-                        storageUnit.Stock__c = stock.Id;
-                        storageUnit.Uniq_Id__c = storageUnit.Name + '_' + stock.Id;
-                        storageUnitsToInsert.add(storageUnit);
+            if(stock.Name.equals('Temporary Stock')){
+                List<Storage_Unit__c> temporaryStorages = [
+                    SELECT Id 
+                    FROM Storage_Unit__c
+                    WHERE Name = 'Temporary Storage'
+                ];
+                if(temporaryStorages.isEmpty()){
+                    Storage_Unit__c temporaryStorage = new Storage_Unit__c();
+                    temporaryStorage.Name = 'Temporary Storage';
+                    temporaryStorage.Stock__c = stock.Id;
+                    temporaryStorage.Length_Position__c = 1;
+                    temporaryStorage.Width_Position__c = 1;
+                    temporaryStorage.Height_Position__c = 1;
+                    temporaryStorage.Uniq_Id__c = 'TemporaryStorage';
+                    storageUnitsToInsert.add(temporaryStorage);
+                }
+            } else {
+                for( Integer length = 1; length <= stock.Length__c; length++){
+                    for( Integer width = 1; width <= stock.Width__c; width++){
+                        for( Integer height = 1; height <= stock.Height__c; height++){
+                            Storage_Unit__c storageUnit = new Storage_Unit__c();
+                            String lengthChar = String.fromCharArray( new List<integer> { BASE_CHAR_NUMBER + length });
+                            String widthNumber = String.valueOf(width);
+                            String heightValue = 'L' + height;
+                            storageUnit.Length_Position__c = length;
+                            storageUnit.Width_Position__c = width;
+                            storageUnit.Height_Position__c = height;
+                            storageUnit.Name = lengthChar + widthNumber + heightValue;
+                            storageUnit.Stock__c = stock.Id;
+                            storageUnit.Uniq_Id__c = storageUnit.Name + '_' + stock.Id;
+                            storageUnitsToInsert.add(storageUnit);
+                        }
                     }
                 }
             }
@@ -54,4 +72,20 @@ public class StockTriggerHandlerHelper {
         upsert storageUnitsToInsert Uniq_Id__c;
     }
 
+    public void createTemporaryStorage() {
+        Stock__c temporaryStock;
+        List<Stock__c> temporaryStocks = [
+            SELECT Id
+            FROM Stock__c 
+            WHERE Name = 'Temporary Stock'
+        ];
+        if(temporaryStocks.isEmpty()){
+            temporaryStock = new Stock__c();
+            temporaryStock.Name = 'Temporary Stock';
+            temporaryStock.Length__c = 1;
+            temporaryStock.Width__c = 1;
+            temporaryStock.Height__c = 1;
+            insert temporaryStock;
+        } 
+    }
 }

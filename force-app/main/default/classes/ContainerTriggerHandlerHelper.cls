@@ -26,7 +26,14 @@ public class ContainerTriggerHandlerHelper {
         }
     }
 
-    // public void changeTheIncomeStatus(List<Container__c> newList){}
+    public void setArrivingDay(List<Container__c> newList){
+        for(Container__c container : newList){
+            if (container.Status__c == 'Arrived for client' || container.Status__c == 'Arrived for shipment') {
+                container.Arrival_Date__c = Date.today();
+            }
+        }
+        
+    }
 
     public void runContactsRetrieve(List<Container__c> newList) {
 
@@ -51,6 +58,14 @@ public class ContainerTriggerHandlerHelper {
         
         if(scheduledJobs.isEmpty()){
             System.scheduleBatch( new CreateContactsBatch(), 'ContactsBatch', 1);
+        }
+    }
+
+    public void updateOnRelease(List<Container__c> newList, Map<Id, Container__c> oldMap) {
+        for(Container__c container : newList){
+            if(container.Status__c == 'Released' && oldMap.get(container.Id).Status__c != 'Released'){
+                container.Storage_Unit__c = null;
+            }
         }
     }
 
