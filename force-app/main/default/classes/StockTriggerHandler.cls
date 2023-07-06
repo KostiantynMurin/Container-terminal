@@ -15,11 +15,13 @@ public class StockTriggerHandler extends TriggerHandler {
     protected override void afterInsert(){
         // if (skip) return;
         helper.createStorageUnits((List<Stock__c>) Trigger.new);
+        helper.createTemporaryStorage();
     }
     
     protected override void afterUpdate(){
         // if (skip) return;
         helper.modifyStorageUnits((List<Stock__c>) Trigger.new, (Map<Id, Stock__c>) Trigger.oldMap );
+        helper.createTemporaryStorage();
     }
     
 
