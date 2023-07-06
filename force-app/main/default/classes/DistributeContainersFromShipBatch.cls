@@ -7,16 +7,41 @@ public with sharing class DistributeContainersFromShipBatch implements Database.
     }
 
     List<Container__c> containersForBatch;
-    Map<Id, Storage_Unit__c> storageUnits;
+    List<Storage_Unit__c> storageUnits;
+    Map<Id, Storage_Unit__c> storageUnitsMap;
     List<Container__c> waitingContainers = new List<Container__c>();
     List<Id> emptyStorages = new List<Id>();
     List<Id> storagesWithOneContainer = new List<Id>();
     List<Id> storagesWithTwoContainers = new List<Id>();
+    List<Container__c> firstLevelContainersForMoving = new List<Container__c>();
+    List<Container__c> secondLevelContainersForMoving = new List<Container__c>();
     List<Container__c> placedContainers = new List<Container__c>();
-    
+    Storage_Unit__c tempStorage;
     public Iterable<Container__c> start(Database.BatchableContext bc) {
         
-        storageUnits = new Map<Id, Storage_Unit__c>([
+        List<Container__c> containersForReturn = new List<Container__c>();
+        if ( containersForBatch != null ){
+            containersForReturn = containersForBatch;
+        } else {
+            containersForReturn = [
+                SELECT Id
+                FROM Container__c
+                WHERE Storage_Unit__c = NULL
+                AND Status__c = 'Arrived for client'
+            ];
+        }
+        if(containersForReturn.isEmpty()){
+            return containersForReturn;
+        }
+        tempStorage = [
+            SELECT Id, 
+                Name
+            FROM Storage_Unit__c
+            WHERE Name = 'Temporary Storage'
+            LIMIT 1
+        ];
+
+        storageUnits = [
             SELECT Id
                 , Stock__c
                 , Stock__r.Height__c
@@ -26,42 +51,104 @@ public with sharing class DistributeContainersFromShipBatch implements Database.
                 , Width_Position__c
                 , Height_Position__c
                 , ( SELECT Id
+                        , Status__c
+                        , Storage_Unit__c
+                        , Storage_Unit__r.Stock__r.Height__c
                     FROM Containers__r
                     LIMIT 1)
             FROM Storage_Unit__c
+            WHERE Name != 'Temporary Storage'
             ORDER BY Stock__c, Name
-        ]);
-
-        for(Integer i = 0; i < storageUnits.values().size(); i++){
-            Storage_Unit__c storageUnit = storageUnits.values().get(i);
+        ];
+        Map<Integer, Storage_Unit__c> indexToStorageUnitMap = new Map<Integer, Storage_Unit__c>();
+        Map<Id, Integer> storageIdToListIndexMap = new Map<Id, Integer>();
+        storageUnitsMap = new Map<Id, Storage_Unit__c>(storageUnits);
+        Integer storagesOpenedAfterFirstLevelMoving = 0;
+        Integer storagesOpenedAfterSecondLevelMoving = 0;
+        for(Integer i = 0; i < storageUnits.size(); i++){
+            Storage_Unit__c storageUnit = storageUnits.get(i);
+            indexToStorageUnitMap.put(i, storageUnit);
+            storageIdToListIndexMap.put(storageUnit.Id, i);
             System.debug('storageUnit');
             System.debug(storageUnit.Name);
             Integer storageHieght = Integer.valueOf(storageUnit.Stock__r.Height__c);
             if(storageUnit.Height_Position__c == 1 && storageUnit.Containers__r.isEmpty()){
                 for(Integer j = 0; j < storageHieght; j++){
-                    emptyStorages.add(storageUnits.values().get(i+j).Id);  
+                    emptyStorages.add(storageUnits.get(i + j).Id);  
                 } 
             } else if (storageUnit.Height_Position__c == 2 && storageUnit.Containers__r.isEmpty()) {
-                storagesWithOneContainer.add(storageUnit.Id);
+                Storage_Unit__c previousStorage = storageUnits.get(i - 1);
+                if(emptyStorages.contains(previousStorage.Id)){
+                    continue;
+                }
+                Container__c previousContainer = previousStorage.Containers__r?.get(0);
+                if(previousContainer.Status__c.equals('Waiting for client')){
+                    for(Integer j = 0; j < storageHieght - 1; j++){
+                        emptyStorages.add(storageUnits.get(i + j).Id);  
+                    } 
+                } else {
+                    firstLevelContainersForMoving.add(previousContainer);
+                    storagesOpenedAfterFirstLevelMoving += Integer.valueOf(storageUnit.Stock__r.Height__c);
+                }
+                
             } else if (storageUnit.Height_Position__c == 3 && storageUnit.Containers__r.isEmpty()){
-                storagesWithTwoContainers.add(storageUnit.Id);
+                Storage_Unit__c previousStorage = storageUnits.get(i - 1);
+                if(emptyStorages.contains(previousStorage.Id)){
+                    continue;
+                }
+                Container__c previousContainer = previousStorage?.Containers__r.get(0);
+                if(previousContainer.Status__c.equals('Waiting for client')){
+                    for(Integer j = 0; j < storageHieght - 2; j++){
+                        emptyStorages.add(storageUnits.get(i + j).Id);  
+                    } 
+                } else {
+                    Container__c firstLevelContainer = storageUnits.get(i - 2).Containers__r.get(0);
+                    secondLevelContainersForMoving.add(previousContainer);
+                    secondLevelContainersForMoving.add(firstLevelContainer);
+                    storagesOpenedAfterSecondLevelMoving += Integer.valueOf(storageUnit.Stock__r.Height__c);
+                }
             } else {
                 continue;
             }
-            i += storageHieght - Integer.valueOf(storageUnit.Height_Position__c);
         }
 
-
-        if (containersForBatch != null ){
-            return containersForBatch;
+        List<Container__c> containersForTemporaryStorage = new List<Container__c>();
+        System.debug('emptyStorages.size()');
+        System.debug(emptyStorages.size());
+        System.debug('containersForReturn.size()');
+        System.debug(containersForReturn.size());
+        if (containersForReturn.size() > emptyStorages.size() ){
+            Integer containersForPlacementLeft = containersForReturn.size() - emptyStorages.size();
+            for(Integer i = 0; containersForPlacementLeft > 0; i++){
+                if(!firstLevelContainersForMoving.isEmpty()){
+                    Container__c containerForMoving = firstLevelContainersForMoving.remove(0);
+                    Integer stockHeight = Integer.valueOf(containerForMoving.Storage_Unit__r.Stock__r.Height__c);
+                    containersForTemporaryStorage.add(containerForMoving);
+                    containersForPlacementLeft -= stockHeight;
+                    Integer storageIndexInList = storageIdToListIndexMap.get(containerForMoving.Storage_Unit__c);
+                    for(Integer j = 0; j < stockHeight; j++){
+                        emptyStorages.add(indexToStorageUnitMap.get(storageIndexInList + j).Id);
+                    }
+                } else if (!secondLevelContainersForMoving.isEmpty()){
+                    Container__c containerForMoving = secondLevelContainersForMoving.remove(0);
+                    Integer stockHeight = Integer.valueOf(containerForMoving.Storage_Unit__r.Stock__r.Height__c);
+                    containersForTemporaryStorage.add(containerForMoving);
+                    containersForTemporaryStorage.add(secondLevelContainersForMoving.remove(0));
+                    containersForPlacementLeft -= stockHeight;
+                    Integer storageIndexInList = storageIdToListIndexMap.get(containerForMoving.Storage_Unit__c);
+                    for(Integer j = 0; j < stockHeight; j++){
+                        emptyStorages.add(indexToStorageUnitMap.get(storageIndexInList + j).Id);
+                    }               
+                } else {
+                    System.debug('we have ' + containersForPlacementLeft + ' of unplaced containers');
+                    break;
+                }
+            }
+       }
+        if(!containersForTemporaryStorage.isEmpty()){
+            moveContainersToTemparoryStorage(containersForTemporaryStorage);
         }
-        List<Container__c> containersForPlacement = [
-            SELECT Id
-            FROM Container__c
-            WHERE Storage_Unit__c = NULL
-            AND Status__c = 'Arrived for client'
-        ];
-        return containersForPlacement;
+        return containersForReturn;
     }
 
     public void execute(Database.BatchableContext BC, List<Container__c> scope) {
@@ -69,10 +156,15 @@ public with sharing class DistributeContainersFromShipBatch implements Database.
         for (Container__c container : scope) {
             if (!emptyStorages.isEmpty()){
                 container.Storage_Unit__c = emptyStorages.remove(0);
-                System.debug(container.Storage_Unit__c);
+                /* System.debug(container.Storage_Unit__c);
                 container.Status__c = 'Waiting for client';
-                placedContainers.add(container);
+                placedContainers.add(container); */
+            } else {
+                container.Storage_Unit__c = tempStorage.Id;
             }
+            System.debug(container.Storage_Unit__c);
+            container.Status__c = 'Waiting for client';
+            placedContainers.add(container);
         }
     }
 
@@ -96,12 +188,22 @@ public with sharing class DistributeContainersFromShipBatch implements Database.
                 }
             }
         }
+        ContainerTriggerHandler.skip = true;
         update placedContainers;
 
         if (!waitingContainers.isEmpty()){
             Database.executeBatch(new DistributeContainersFromShipBatch(waitingContainers), 200);
         }
     }
+
+    private void moveContainersToTemparoryStorage(List<Container__c> containersForTemporaryStorage ) {
+        for(Container__c container : containersForTemporaryStorage ){
+            container.Storage_Unit__c = tempStorage.Id;
+        }
+        ContainerTriggerHandler.skip = true;
+        update containersForTemporaryStorage;
+    }
+
 
     public class DistributeContainersFromShipBatchException extends Exception {}
 }
