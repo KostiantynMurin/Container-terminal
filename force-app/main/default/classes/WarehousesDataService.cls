@@ -54,8 +54,54 @@ public class WarehousesDataService {
         return cell;
     }
 
+    public CellDataWrapper getEmptyCellForShipmentContainer(Id warehouseId) {
+        
+        if (bufferZoneCell.warehouseId == warehouseId || warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.isEmpty()) {
+            return bufferZoneCell;
+        }
+
+        if (warehouseId == null || !warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.contains(warehouseId)) {
+            warehouseId = currentWarehouseWithEmptyCells;
+        }
+
+        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(warehouseId);
+        CellDataWrapper emptyCellForShipmentContainer = wdw.getEmptyCellForShipmentContainer();
+
+        if (emptyCellForShipmentContainer != null) {
+            return emptyCellForShipmentContainer;
+        }
+
+        for (Id warehouseId_i : warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells) {
+            
+            if (warehouseId == warehouseId_i) {
+                continue;
+            }
+
+            wdw = warehouseIdToDataWrapperMap.get(warehouseId);
+            emptyCellForShipmentContainer = wdw.getEmptyCellForShipmentContainer();
+
+            if (emptyCellForShipmentContainer != null) {
+                break;
+            }
+        }
+
+        if (emptyCellForShipmentContainer != null) {
+            return emptyCellForShipmentContainer;
+        }
+
+        return bufferZoneCell;
+    }
+
     public CellDataWrapper getPreviousCell(CellDataWrapper currentCell) {
         return warehouseIdToDataWrapperMap.get(currentCell.warehouseId).getPreviousCell(currentCell);
+    }
+
+    public CellDataWrapper getNextCell(CellDataWrapper currentCell) {
+        return warehouseIdToDataWrapperMap.get(currentCell.warehouseId).getNextCell(currentCell);
+    }
+
+    public CellDataWrapper getCell(Id warehouseId, Id cellId) {
+        return warehouseIdToDataWrapperMap.get(warehouseId).getCell(cellId);
     }
 
     public Integer getMaxLevelOfTheCurrentWherhouse() {
@@ -65,20 +111,32 @@ public class WarehousesDataService {
     public void placeContainerToCell(Container__c container, CellDataWrapper cell) {
 
         if (cell.cellId == bufferZoneCell.cellId) {
+            container.Warehouse_Cell__c = cell.cellId;
             return;
         }
 
-        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(currentWarehouseWithEmptyCells);
+        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(cell.warehouseId);
         wdw.placeContainerToCell(container, cell);
 
         if (wdw.getAmountOfEmptyCells() == 0) {
 
-            Integer elementIndex = warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.indexOf(currentWarehouseWithEmptyCells);
+            Integer elementIndex = warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.indexOf(wdw.warehouseId);
             if (elementIndex != -1) {
                 warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.remove(elementIndex);
             }
             setCurrentWarehouseWithEmptyCells();
         }
+    }
+
+    public void removeContainerFromCell(Container__c container, CellDataWrapper cell) {
+
+        if (cell.cellId == bufferZoneCell.cellId) {
+            container.Warehouse_Cell__c = null;
+            return;
+        }
+
+        warehouseIdToDataWrapperMap.get(cell.warehouseId).removeContainerFromCell(container, cell);
+        setWarehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells();
     }
 
     private void initData() {

@@ -95,62 +95,50 @@ public class ContainerDistributionBatch implements Database.Batchable<Container_
             container_i.Status__c = 'Waiting For Delivery';
 
             if (currentEmptyCell.getLevel() == 1) {
-                container_i.Warehouse_Cell__c = currentEmptyCell.cellId;
                 whDataService.placeContainerToCell(container_i, currentEmptyCell);
-            } else {
-
-                CellDataWrapper previousCell = whDataService.getPreviousCell(currentEmptyCell);
-
-                if (!previousCell.isContainerForShipment()) {
-                    container_i.Warehouse_Cell__c = currentEmptyCell.cellId;
-                    whDataService.placeContainerToCell(container_i, currentEmptyCell);
-                } else {
-
-                    Integer levelOfThePreviousCell = previousCell.getLevel();
-                    System.debug('levelOfThePreviousCell : ' + levelOfThePreviousCell);
-
-                    List<CellDataWrapper> cellsWithContainersForShipment = new List<CellDataWrapper>{previousCell};
-                    
-                    for (Integer j = levelOfThePreviousCell; j > 1; j--) {
-
-                        CellDataWrapper previousCell_j = whDataService.getPreviousCell(cellsWithContainersForShipment.get(levelOfThePreviousCell - j));
-
-                        if (!previousCell_j.isContainerForShipment()) {
-                            break;
-                        }
-
-                        cellsWithContainersForShipment.add(previousCell_j);
-                    }
-
-                    System.debug('cellsWithContainersForShipment : ' + cellsWithContainersForShipment);
-
-                    Container__c currentContainerToPlace = container_i;
-                    System.debug('currentContainerToPlace : ' + currentContainerToPlace);
-
-                    for (Integer j = cellsWithContainersForShipment.size() - 1; j > -1; j--) {
-
-                        CellDataWrapper lowestCell = cellsWithContainersForShipment.get(j);
-                        System.debug('lowestCell : ' + lowestCell);
-
-                        Container__c currentContainerOfTheLowestCell = lowestCell.getContainer();
-                        System.debug('currentContainerOfTheLowestCell : ' + currentContainerOfTheLowestCell);
-
-                        currentContainerToPlace.Warehouse_Cell__c = lowestCell.cellId;
-                        whDataService.placeContainerToCell(currentContainerToPlace, lowestCell);
-                        containersToUpdateMap.put(currentContainerToPlace.Id, currentContainerToPlace);
-
-                        currentContainerToPlace = currentContainerOfTheLowestCell;
-                        System.debug('currentContainerToPlace : ' + currentContainerToPlace);
-                    }
-
-                    System.debug('currentContainerToPlace after for : ' + currentContainerToPlace);
-                    System.debug('currentEmptyCell : ' + currentEmptyCell);
-
-                    currentContainerToPlace.Warehouse_Cell__c = currentEmptyCell.cellId;
-                    whDataService.placeContainerToCell(currentContainerToPlace, currentEmptyCell);
-                    containersToUpdateMap.put(currentContainerToPlace.Id, currentContainerToPlace);
-                }
+                containersToUpdateMap.put(container_i.Id, container_i);
+                continue;
             }
+
+            CellDataWrapper previousCell = whDataService.getPreviousCell(currentEmptyCell);
+
+            if (!previousCell.isContainerForShipment()) {
+                whDataService.placeContainerToCell(container_i, currentEmptyCell);
+                containersToUpdateMap.put(container_i.Id, container_i);
+                continue;
+            }
+
+            Integer levelOfThePreviousCell = previousCell.getLevel();
+
+            List<CellDataWrapper> cellsWithContainersForShipment = new List<CellDataWrapper>{previousCell};
+            
+            for (Integer j = levelOfThePreviousCell; j > 1; j--) {
+
+                CellDataWrapper previousCell_j = whDataService.getPreviousCell(cellsWithContainersForShipment.get(levelOfThePreviousCell - j));
+
+                if (!previousCell_j.isContainerForShipment()) {
+                    break;
+                }
+
+                cellsWithContainersForShipment.add(previousCell_j);
+            }
+
+            Container__c currentContainerToPlace = container_i;
+
+            for (Integer j = cellsWithContainersForShipment.size() - 1; j > -1; j--) {
+
+                CellDataWrapper lowestCell = cellsWithContainersForShipment.get(j);
+
+                Container__c currentContainerOfTheLowestCell = lowestCell.getContainer();
+
+                whDataService.placeContainerToCell(currentContainerToPlace, lowestCell);
+                containersToUpdateMap.put(currentContainerToPlace.Id, currentContainerToPlace);
+
+                currentContainerToPlace = currentContainerOfTheLowestCell;
+            }
+
+            whDataService.placeContainerToCell(currentContainerToPlace, currentEmptyCell);
+            containersToUpdateMap.put(currentContainerToPlace.Id, currentContainerToPlace);
         }
 
         update containersToUpdateMap.values();

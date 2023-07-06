@@ -10,9 +10,13 @@ public with sharing class ContainerTRHandler {
                 System.debug('BEFORE_INSERT');
                 ContainerTRDispatcher.populateValuesOnArrival(newList);
                 ContainerTRDispatcher.assignContacts(newList);
+                ContainerTRDispatcher.distributeContainersForShipment(newList);
             }
             when AFTER_INSERT {
                 ContainerTRDispatcher.scheduleContactAssignmentJob();
+            }
+            when BEFORE_UPDATE {
+                ContainerTRDispatcher.removeContainersFromWarehouseAfterDeliveryShipment(newList, oldMap);
             }
         }
     }

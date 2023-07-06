@@ -46,6 +46,16 @@ public class CellDataWrapper {
         return WarehouseTRUtil.getCellAddress(getWidth(), getLength(), level - 1);
     }
 
+    public String getAddressOfTheNextCell(Integer warehouseMaxLevel) {
+
+        Integer level = getLevel();
+        if (level == warehouseMaxLevel) {
+            return null;
+        }
+
+        return WarehouseTRUtil.getCellAddress(getWidth(), getLength(), level + 1);
+    }
+
     public Integer getLevel() {
         return Integer.valueOf(cell.Level__c);
     }
