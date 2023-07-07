@@ -1,5 +1,10 @@
 public with sharing class WarehouseTRUtil {
     
+    //in order to convert width into the corresponding letter
+    public static final Integer ASCII_CHARACTER_BASE = 64;
+    public static Id bufferZoneRTId = Schema.SObjectType.Warehouse__c.getRecordTypeInfosByDeveloperName().get('Buffer_Zone').getRecordTypeId();
+    public static Id warehouseRTId = Schema.SObjectType.Warehouse__c.getRecordTypeInfosByDeveloperName().get('Warehouse').getRecordTypeId();
+
     public static Map<Id, Set<String>> getWarehouseIdToExistedCellAddressesMap(List<Warehouse__c> warehouses) {
 
         Map<Id, Set<String>> whIdToExistedCellAddressesMap = new Map<Id, Set<String>>();
@@ -42,5 +47,26 @@ public with sharing class WarehouseTRUtil {
         ];
 
         return cells;
+    }
+
+    public static String getCellAddress(Integer width, Integer length, Integer level) {
+        String address = String.fromCharArray(new List<Integer>{ASCII_CHARACTER_BASE + width}) + length + 'L' + level;
+        return address;
+    }
+
+    public static Integer getAmountOfEmptyCells() {
+
+        List<AggregateResult> results = [
+            SELECT Count(Id) amountOfEmptyCells
+            FROM Cell__c
+            WHERE Is_Empty__c = true
+            AND Warehouse__r.RecordTypeId =: warehouseRTId
+        ];
+
+        if (results.isEmpty()) {
+            return 0;
+        }
+
+        return (Integer) results.get(0).get('amountOfEmptyCells');
     }
 }
