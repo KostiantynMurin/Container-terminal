@@ -141,6 +141,12 @@ public class ContainerDistributionBatch implements Database.Batchable<Container_
             containersToUpdateMap.put(currentContainerToPlace.Id, currentContainerToPlace);
         }
 
+        if (containersToUpdateMap.isEmpty()) {
+            return;
+        }
+
+        List<Container__c> lockedContainers = [SELECT Id FROM Container__c WHERE Id IN: containersToUpdateMap.keySet() FOR UPDATE];
+
         update containersToUpdateMap.values();
     }
 

@@ -53,6 +53,47 @@ public class WarehouseDataWrapper {
         return emptyCellsMap.get(cellAddressToIdMap.get(orderedListOfEmptyCellsAddresses.get(0)));
     }
 
+    public CellDataWrapper getEmptyCellForClientContainer(Date dateOfIssue) {
+
+        if (orderedListOfEmptyCellsAddresses.isEmpty()) {
+            return null;
+        }
+
+        CellDataWrapper firstLevelCell = null;
+        CellDataWrapper cellWithPreviousCellWithBiggestOrEqualsDateOfIssue = null;
+
+        for (CellDataWrapper cdw_i : emptyCellsMap.values()) {
+            
+            if (cdw_i.getLevel() == 1) {
+
+                if (firstLevelCell == null) {
+                    firstLevelCell = cdw_i;
+                }
+                continue;
+            }
+
+            CellDataWrapper previousCell = getPreviousCell(cdw_i);
+
+            if (previousCell != null &&
+                        !previousCell.isContainerForShipment() &&
+                        ((previousCell.getContainersDateOfIssue() == null && previousCell.getContainer() != null) || 
+                            (previousCell.getContainersDateOfIssue() != null && previousCell.getContainersDateOfIssue() <= dateOfIssue))) {
+                    cellWithPreviousCellWithBiggestOrEqualsDateOfIssue = cdw_i;
+                break;
+            }
+        }
+
+        CellDataWrapper emptyCellForClientContainer = null;
+
+        if (cellWithPreviousCellWithBiggestOrEqualsDateOfIssue != null) {
+            emptyCellForClientContainer = cellWithPreviousCellWithBiggestOrEqualsDateOfIssue;
+        } else if (firstLevelCell != null) {
+            emptyCellForClientContainer = firstLevelCell;
+        }
+
+        return emptyCellForClientContainer;
+    }
+
     public CellDataWrapper getEmptyCellForShipmentContainer() {
 
         if (orderedListOfEmptyCellsAddresses.isEmpty()) {

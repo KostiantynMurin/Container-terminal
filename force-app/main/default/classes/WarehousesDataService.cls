@@ -6,10 +6,11 @@ public class WarehousesDataService {
                                               + ', Width__c'
                                               + ', Level__c'
                                               + ', Warehouse__c'
+                                              + ', Warehouse__r.RecordTypeId'
                                               + ', Warehouse__r.Length__c'
                                               + ', Warehouse__r.Width__c'
                                               + ', Warehouse__r.Level__c'
-                                              + ', (SELECT Id, Status__c FROM Containers__r)'
+                                              + ', (SELECT Id, Status__c, Date_Of_Issue__c FROM Containers__r)'
                                         + ' FROM Cell__c'
                                         + ' WHERE Warehouse__r.RecordTypeId =: rtId';
     private static WarehousesDataService instance;
@@ -54,6 +55,46 @@ public class WarehousesDataService {
         return cell;
     }
 
+    public CellDataWrapper getEmptyCellForClientContainer(Date dateOfIssue, Id warehouseId) {
+        
+        if (bufferZoneCell.warehouseId == warehouseId || 
+                warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.isEmpty() ||
+                dateOfIssue == null) {
+            return bufferZoneCell;
+        }
+
+        if (warehouseId == null || !warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.contains(warehouseId)) {
+            warehouseId = currentWarehouseWithEmptyCells;
+        }
+
+        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(warehouseId);
+        CellDataWrapper emptyCellForClientContainer = wdw.getEmptyCellForClientContainer(dateOfIssue);
+
+        if (emptyCellForClientContainer != null) {
+            return emptyCellForClientContainer;
+        }
+
+        for (Id warehouseId_i : warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells) {
+            
+            if (warehouseId == warehouseId_i) {
+                continue;
+            }
+
+            wdw = warehouseIdToDataWrapperMap.get(warehouseId_i);
+            emptyCellForClientContainer = wdw.getEmptyCellForClientContainer(dateOfIssue);
+
+            if (emptyCellForClientContainer != null) {
+                break;
+            }
+        }
+
+        if (emptyCellForClientContainer != null) {
+            return emptyCellForClientContainer;
+        }
+
+        return bufferZoneCell;
+    }
+
     public CellDataWrapper getEmptyCellForShipmentContainer(Id warehouseId) {
         
         if (bufferZoneCell.warehouseId == warehouseId || warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.isEmpty()) {
@@ -77,7 +118,7 @@ public class WarehousesDataService {
                 continue;
             }
 
-            wdw = warehouseIdToDataWrapperMap.get(warehouseId);
+            wdw = warehouseIdToDataWrapperMap.get(warehouseId_i);
             emptyCellForShipmentContainer = wdw.getEmptyCellForShipmentContainer();
 
             if (emptyCellForShipmentContainer != null) {

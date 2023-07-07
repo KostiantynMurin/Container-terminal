@@ -2,6 +2,7 @@ public class CellDataWrapper {
     
     public Id cellId;
     public Id warehouseId;
+    public Boolean isBufferZoneCell;
     private Cell__c cell;
     private Container__c container;
 
@@ -13,6 +14,8 @@ public class CellDataWrapper {
         if (!cell.Containers__r.isEmpty()) {
             this.container = cell.Containers__r.get(0);
         }
+
+        this.isBufferZoneCell = (cell.Warehouse__r.RecordTypeId == WarehouseTRUtil.bufferZoneRTId);
     }
 
     public void setContainer(Container__c container) {
@@ -30,6 +33,15 @@ public class CellDataWrapper {
         }
 
         return true;
+    }
+
+    public Date getContainersDateOfIssue() {
+
+        if (container == null) {
+            return null;
+        }
+
+        return container.Date_Of_Issue__c;
     }
 
     public String getAddress() {

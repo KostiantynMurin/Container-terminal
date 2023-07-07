@@ -112,4 +112,58 @@ public with sharing class ContainerTRDispatcher {
 
         ContainerTRService.removeContainersFromWarehouseAfterDeliveryShipment(warehouseIdToContainersOrderedByCellAddressMap);
     }
+
+    public static void changeCellAvailability(List<Container__c> processingRecords, Map<Id, Container__c> oldMap) {
+        System.debug('ContainerTRDispatcher => changeCellAvailability');
+
+        Set<Id> cellIdsToUpdate = new Set<Id>();
+
+        for (Container__c container_i : processingRecords) {
+            
+            if (oldMap == null) {
+
+                if (container_i.Warehouse_Cell__c != null) {
+                    cellIdsToUpdate.add(container_i.Warehouse_Cell__c);
+                }
+            } else {
+                
+                Container__c oldContainer = oldMap.get(container_i.Id);
+
+                if (container_i.Warehouse_Cell__c != oldContainer.Warehouse_Cell__c) {
+
+                    if (container_i.Warehouse_Cell__c != null) {
+                        cellIdsToUpdate.add(container_i.Warehouse_Cell__c);
+                    }
+
+                    if (oldContainer.Warehouse_Cell__c != null) {
+                        cellIdsToUpdate.add(oldContainer.Warehouse_Cell__c);   
+                    }
+                }
+            }
+        }
+
+        if (cellIdsToUpdate.isEmpty()) {
+            return;
+        }
+
+        ContainerTRService.changeCellAvailability(cellIdsToUpdate);
+    }
+
+    public static void scheduleBufferDistributionJob() {
+        System.debug('ContainerTRDispatcher => scheduleBufferDistributionJob');
+
+        if (ContainerTRUtil.getAmountOfContainersInBufferZone() == 0 ||
+                WarehouseTRUtil.getAmountOfEmptyCells() == 0) {
+            return;
+        }
+
+        List<CronTrigger> existedJobs = [
+            SELECT Id
+            FROM CronTrigger
+            WHERE CronJobDetail.Name = 'BufferContainerDistributionBatch'
+            AND State != 'COMPLETE'
+        ];
+
+        ContainerTRService.scheduleBufferDistributionJob(existedJobs);
+    }
 }

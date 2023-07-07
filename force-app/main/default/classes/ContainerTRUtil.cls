@@ -14,4 +14,19 @@ public with sharing class ContainerTRUtil {
 
         return externalIdToContactIdMap;
     }
+
+    public static Integer getAmountOfContainersInBufferZone() {
+
+        List<AggregateResult> results = [
+            SELECT Count(Id) amountOfContainersInBufferZone
+            FROM Container__c
+            WHERE Warehouse_Cell__r.Warehouse__r.RecordTypeId =: WarehouseTRUtil.bufferZoneRTId
+        ];
+
+        if (results.isEmpty()) {
+            return 0;
+        }
+
+        return (Integer) results.get(0).get('amountOfContainersInBufferZone');
+    }
 }

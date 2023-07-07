@@ -14,9 +14,20 @@ public with sharing class ContainerTRHandler {
             }
             when AFTER_INSERT {
                 ContainerTRDispatcher.scheduleContactAssignmentJob();
+                ContainerTRDispatcher.changeCellAvailability(newList, null);
             }
             when BEFORE_UPDATE {
                 ContainerTRDispatcher.removeContainersFromWarehouseAfterDeliveryShipment(newList, oldMap);
+            }
+            when AFTER_UPDATE {
+                ContainerTRDispatcher.changeCellAvailability(newList, oldMap);
+                ContainerTRDispatcher.scheduleBufferDistributionJob();
+            }
+            when AFTER_DELETE {
+                ContainerTRDispatcher.changeCellAvailability(oldMap.values(), null);
+            }
+            when AFTER_UNDELETE {
+                ContainerTRDispatcher.changeCellAvailability(newList, null);
             }
         }
     }

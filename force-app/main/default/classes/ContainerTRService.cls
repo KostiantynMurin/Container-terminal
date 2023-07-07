@@ -91,4 +91,42 @@ public with sharing class ContainerTRService {
 
         update containersToUpdateMap.values();
     }
+
+    public static void changeCellAvailability(Set<Id> cellIdsToUpdate) {
+
+        List<Cell__c> cellsToUpdate = new List<Cell__c>();
+
+        for (Cell__c cell_i : [SELECT Id
+                                    , Is_Empty__c
+                                    , (SELECT Id FROM Containers__r LIMIT 1)
+                               FROM Cell__c
+                               WHERE Id IN: cellIdsToUpdate
+                               AND Warehouse__r.RecordTypeId =: WarehouseTRUtil.warehouseRTId]) {
+            
+            Boolean isEmptyNewValue = cell_i.Containers__r.isEmpty();
+
+            if (cell_i.Is_Empty__c != isEmptyNewValue) {
+                cell_i.Is_Empty__c = isEmptyNewValue;
+                cellsToUpdate.add(cell_i);
+            }
+        }
+
+        if (cellsToUpdate.isEmpty()) {
+            return;
+        }
+
+        update cellsToUpdate;
+    }
+
+    public static void scheduleBufferDistributionJob(List<CronTrigger> existedJobs) {
+
+        if (!existedJobs.isEmpty()) {
+            
+            for (CronTrigger job_i : existedJobs) {
+                System.abortJob(job_i.Id);
+            }
+        }
+
+        System.scheduleBatch(new BufferContainerDistributionBatch(), 'BufferContainerDistributionBatch', 5);
+    }
 }

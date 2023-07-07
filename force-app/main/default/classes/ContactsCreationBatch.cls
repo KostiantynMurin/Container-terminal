@@ -75,6 +75,8 @@ public class ContactsCreationBatch implements Database.Batchable<sObject>, Sched
             container_i.Contact__c = externalIdToContactMap.get(container_i.Contact_Ext_Id__c).Id;
         }
 
+        List<Container__c> lockedContainers = [SELECT Id FROM Container__c WHERE Id IN: scope FOR UPDATE];
+
         update scope;
     }
 
