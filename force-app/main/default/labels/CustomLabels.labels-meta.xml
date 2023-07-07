@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>CustomSettingNotFound</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>CustomSettingNotFound</shortDescription>
+        <value>Unable to query custom setting. Make sure you&apos;ve passed the correct setting name.</value>
+    </labels>
+    <labels>
+        <fullName>DML_Exception_Message</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>DML Exception Message</shortDescription>
+        <value>You have no permission to {0} this object: {1}</value>
+    </labels>
+    <labels>
+        <fullName>NewValueLessThanPrevious</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>NewValueLessThanPrevious</shortDescription>
+        <value>The new value cannot be less than the previous one!</value>
+    </labels>
+    <labels>
+        <fullName>JSON_Parser_Error_Message</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>JSON Parser Error Message</shortDescription>
+        <value>{0} consuming unrecognized property: {1}</value>
+    </labels>
+</CustomLabels>
