@@ -7,7 +7,8 @@ public with sharing class ContactCreatorBatch implements Database.Batchable<Cont
 
     private String query = 'SELECT Id, ' +
                           '       Contact__c, ' +
-                          '       External_Contact_ID__c ' +
+                          '       External_Contact_ID__c, ' +
+                          '       Issuance_Date__c ' +
                           'FROM Container__c ' +
                           'WHERE Contact__c = null AND External_Contact_ID__c != null';
     private Map<String, Contact> createdContactByExtIdMap = new Map<String, Contact>();
@@ -72,5 +73,6 @@ public with sharing class ContactCreatorBatch implements Database.Batchable<Cont
             }
         }
         DMLExecutor.doUpdate(this.containerToUpdateList);
+        Database.executeBatch(new ContainerDistributorBatch(), 200);
     }
 }

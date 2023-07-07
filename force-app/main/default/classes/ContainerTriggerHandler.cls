@@ -4,6 +4,9 @@
  * @date 18-06-2023
  */
 public class ContainerTriggerHandler implements ITriggerHandler {
+
+    private static final List<String> AWAITING_STATUSES_LIST = new List<String>{ 'Awaiting issuance', 'Awaiting shipment' };
+    private static final List<String> ARRIVED_STATUSES_LIST = new List<String>{ 'Arrived for issuance', 'Arrived for shipment' };
     
     /**
      * @description   Before insertion helper method
@@ -22,7 +25,9 @@ public class ContainerTriggerHandler implements ITriggerHandler {
      * @param newMap Map<Id, SObject> newMap
      * @param oldMap Map<Id, SObject> newMap
      */
-    public void beforeUpdate(Map<Id, SObject> newMap, Map<Id, SObject> oldMap) {}
+    public void beforeUpdate(Map<Id, SObject> newMap, Map<Id, SObject> oldMap) {
+        removeContainerCellRelation(newMap.values(), oldMap);
+    }
 
     /**
      * @description   Before deletion helper method
@@ -40,6 +45,7 @@ public class ContainerTriggerHandler implements ITriggerHandler {
      */
     public void afterInsert(Map<Id, SObject> newMap) {
         runContactCreatorBatch();
+        publishPlatformEvent(newMap.values());
     }
 
     /**
@@ -49,7 +55,9 @@ public class ContainerTriggerHandler implements ITriggerHandler {
      * @param newMap Map<Id, SObject> newMap
      * @param oldMap Map<Id, SObject> newMap
      */
-    public void afterUpdate(Map<Id, SObject> newMap, Map<Id, SObject> oldMap) {}
+    public void afterUpdate(Map<Id, SObject> newMap, Map<Id, SObject> oldMap) {
+        updateRelatedCell(newMap.values(), oldMap);
+    }
 
     /**
      * @description   After deletion helper method
@@ -57,7 +65,9 @@ public class ContainerTriggerHandler implements ITriggerHandler {
      * @date 18-06-2023
      * @param oldMap Map<Id, SObject> newMap
      */
-    public void afterDelete(Map<Id, SObject> oldMap) {}
+    public void afterDelete(Map<Id, SObject> oldMap) {
+        updateRelatedCell(oldMap.values());
+    }
 
     /**
      * @description   After undeletion helper method
@@ -91,10 +101,7 @@ public class ContainerTriggerHandler implements ITriggerHandler {
     private static void setContainerStatus(Container__c container) {
         if (container.Status__c == null) {
             container.Status__c = 'Arrived for issuance';
-        } 
-        // else if (container.Status__c == 'Arrived for shipment') {
-        //     container.Status__c = 'Awaiting shipment';
-        // }
+        }
     }
 
     private static void setIssuanceDate(Container__c container) {
@@ -121,5 +128,62 @@ public class ContainerTriggerHandler implements ITriggerHandler {
 
     private static void runContactCreatorBatch() {
         DataBase.executeBatch(new ContactCreatorBatch(), 50);
+    }
+
+    private static void removeContainerCellRelation(List<Container__c> newList, Map<Id, SObject> oldMap) {
+        for (Container__c container : newList) {
+            if (container.Status__c != oldMap.get(container.Id).get('Status__c') && container.Status__c == 'Issued') {
+                container.Warehouse_Cell__c = null;
+            }
+        }
+    }
+
+    private static void updateRelatedCell(List<Container__c> newList, Map<Id, SObject> oldMap) {
+        List<Warehouse_Cell__c> cellToUpdateList = new List<Warehouse_Cell__c>();
+        Set<Date> issuanceDateSet = new Set<Date>();
+        for (Container__c container : newList) {
+            if (container.Status__c != oldMap.get(container.Id).get('Status__c') && container.Status__c == 'Issued' && container.Warehouse_Cell__c == null) {
+                issuanceDateSet.add(container.Issuance_Date__c);
+                cellToUpdateList.add(
+                    new Warehouse_Cell__c(
+                        Id = (Id)oldMap.get(container.Id).get('Warehouse_Cell__c'),
+                        Is_Empty__c = true
+                    )
+                );
+            }
+        }
+        DMLExecutor.doUpdate(cellToUpdateList);
+    }
+
+    private void publishPlatformEvent(List<Container__c> newList) {
+        Boolean isUnlocatedContainerCreated = false;
+        for (Container__c container : newList) {
+            if (ARRIVED_STATUSES_LIST.contains(container.Status__c) && container.Warehouse_Cell__c == null) {
+                isUnlocatedContainerCreated = true;
+                break;
+            }
+        }
+        if (isUnlocatedContainerCreated) {
+            Map<Id, Container_Warehouse__c> warehouseMap = new Map<Id, Container_Warehouse__c>([
+                SELECT Id FROM Container_Warehouse__c
+            ]);
+            PlatformEventBuilder.publishUnlocatedContainersCreatedEvent(warehouseMap.keySet());
+        }
+    }
+
+    private void updateRelatedCell(List<Container__c> oldList) {
+        List<Warehouse_Cell__c> cellToUpdateList = new List<Warehouse_Cell__c>();
+        for (Container__c container : oldList) {
+            if (container.Warehouse_Cell__c == null) {
+                continue;
+            }
+            cellToUpdateList.add(
+                new Warehouse_Cell__c(
+                    Id = container.Warehouse_Cell__c,
+                    Is_Empty__c = true
+                )
+            );
+        }
+        DMLExecutor.doUpdate(cellToUpdateList);
     }
 }
