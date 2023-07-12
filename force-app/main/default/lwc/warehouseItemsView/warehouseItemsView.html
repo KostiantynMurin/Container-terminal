@@ -1,0 +1,43 @@
+<template>
+    <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+        <thead>
+            <tr class="slds-line-height_reset">
+                <th scope="col" class="slds-text-title_caps"></th> <!-- empty cell for spacing -->
+                <template for:each={columns} for:item="column">
+                    <th key={column} scope="col" class="slds-text-title_caps slds-p-horizontal_x-small">{column}</th>
+                </template>
+            </tr>
+        </thead>
+        <tbody>
+            <template for:each={warehouseItems} for:item="row">
+                <tr key={row.name}>
+                    <th scope="row" class="slds-text-title">{row.name}</th>
+                    <template for:each={row.columns} for:item="column">
+                        <td key={column.name} class="slds-p-horizontal_x-small">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th scope="col" class="slds-text-title_caps slds-p-horizontal_x-small">Code</th>
+                                        <th scope="col" class="slds-text-title_caps slds-p-horizontal_x-small">Name</th>
+                                        <th scope="col" class="slds-text-title_caps slds-p-horizontal_x-small">Delivery</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={column.cells} for:item="cell">
+                                        <tr key={cell.Id} style={cell.style}>
+                                            <td data-label="Level">{cell.code}</td>
+                                            <td data-label="Level">
+                                                <a href={cell.containerLink} target="_blank">{cell.containerName}</a>
+                                            </td>
+                                            <td data-label="Delivery Date">{cell.deliveryDate}</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </td>
+                    </template>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+</template>
