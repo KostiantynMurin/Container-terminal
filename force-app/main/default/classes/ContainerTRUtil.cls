@@ -20,7 +20,7 @@ public with sharing class ContainerTRUtil {
         List<AggregateResult> results = [
             SELECT Count(Id) amountOfContainersInBufferZone
             FROM Container__c
-            WHERE Warehouse_Cell__r.Warehouse__r.RecordTypeId =: WarehouseTRUtil.bufferZoneRTId
+            WHERE Warehouse_Cell__r.Warehouse__r.RecordTypeId =: WarehouseUtil.bufferZoneRTId
         ];
 
         if (results.isEmpty()) {

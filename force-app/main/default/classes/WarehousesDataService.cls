@@ -24,9 +24,9 @@ public class WarehousesDataService {
     public class WarehousesDataWrapperException extends Exception {}
 
     private WarehousesDataService() {
-        Map<String, Schema.RecordTypeInfo> devNameToRecordTypeInfoMap = Schema.SObjectType.Warehouse__c.getRecordTypeInfosByDeveloperName();
-        this.bufferZoneRTId = devNameToRecordTypeInfoMap.get('Buffer_Zone').getRecordTypeId();
-        this.warehouseRTId = devNameToRecordTypeInfoMap.get('Warehouse').getRecordTypeId();
+        
+        this.bufferZoneRTId = WarehouseUtil.bufferZoneRTId;
+        this.warehouseRTId = WarehouseUtil.warehouseRTId;
         initData();
     }
 
@@ -57,9 +57,9 @@ public class WarehousesDataService {
 
     public CellDataWrapper getEmptyCellForClientContainer(Date dateOfIssue, Id warehouseId) {
         
-        if (bufferZoneCell.warehouseId == warehouseId || 
-                warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.isEmpty() ||
-                dateOfIssue == null) {
+        if (bufferZoneCell.warehouseId == warehouseId
+                || warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.isEmpty()
+                || dateOfIssue == null) {
             return bufferZoneCell;
         }
 
@@ -67,8 +67,8 @@ public class WarehousesDataService {
             warehouseId = currentWarehouseWithEmptyCells;
         }
 
-        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(warehouseId);
-        CellDataWrapper emptyCellForClientContainer = wdw.getEmptyCellForClientContainer(dateOfIssue);
+        WarehouseDataWrapper warehouseDataWrapper = warehouseIdToDataWrapperMap.get(warehouseId);
+        CellDataWrapper emptyCellForClientContainer = warehouseDataWrapper.getEmptyCellForClientContainer(dateOfIssue);
 
         if (emptyCellForClientContainer != null) {
             return emptyCellForClientContainer;
@@ -80,8 +80,8 @@ public class WarehousesDataService {
                 continue;
             }
 
-            wdw = warehouseIdToDataWrapperMap.get(warehouseId_i);
-            emptyCellForClientContainer = wdw.getEmptyCellForClientContainer(dateOfIssue);
+            warehouseDataWrapper = warehouseIdToDataWrapperMap.get(warehouseId_i);
+            emptyCellForClientContainer = warehouseDataWrapper.getEmptyCellForClientContainer(dateOfIssue);
 
             if (emptyCellForClientContainer != null) {
                 break;
@@ -105,8 +105,8 @@ public class WarehousesDataService {
             warehouseId = currentWarehouseWithEmptyCells;
         }
 
-        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(warehouseId);
-        CellDataWrapper emptyCellForShipmentContainer = wdw.getEmptyCellForShipmentContainer();
+        WarehouseDataWrapper warehouseDataWrapper = warehouseIdToDataWrapperMap.get(warehouseId);
+        CellDataWrapper emptyCellForShipmentContainer = warehouseDataWrapper.getEmptyCellForShipmentContainer();
 
         if (emptyCellForShipmentContainer != null) {
             return emptyCellForShipmentContainer;
@@ -118,8 +118,8 @@ public class WarehousesDataService {
                 continue;
             }
 
-            wdw = warehouseIdToDataWrapperMap.get(warehouseId_i);
-            emptyCellForShipmentContainer = wdw.getEmptyCellForShipmentContainer();
+            warehouseDataWrapper = warehouseIdToDataWrapperMap.get(warehouseId_i);
+            emptyCellForShipmentContainer = warehouseDataWrapper.getEmptyCellForShipmentContainer();
 
             if (emptyCellForShipmentContainer != null) {
                 break;
@@ -156,12 +156,12 @@ public class WarehousesDataService {
             return;
         }
 
-        WarehouseDataWrapper wdw = warehouseIdToDataWrapperMap.get(cell.warehouseId);
-        wdw.placeContainerToCell(container, cell);
+        WarehouseDataWrapper warehouseDataWrapper = warehouseIdToDataWrapperMap.get(cell.warehouseId);
+        warehouseDataWrapper.placeContainerToCell(container, cell);
 
-        if (wdw.getAmountOfEmptyCells() == 0) {
+        if (warehouseDataWrapper.getAmountOfEmptyCells() == 0) {
 
-            Integer elementIndex = warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.indexOf(wdw.warehouseId);
+            Integer elementIndex = warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.indexOf(warehouseDataWrapper.warehouseId);
             if (elementIndex != -1) {
                 warehouseIdsWithEmptyCellsOrderedByAmountOfEmptyCells.remove(elementIndex);
             }
@@ -257,9 +257,9 @@ public class WarehousesDataService {
 
         Map<Integer, List<Id>> amountOfEmptyCellsToWarehouseIdsMap = new Map<Integer, List<Id>>();
 
-        for (WarehouseDataWrapper wdw_i : warehouseIdToDataWrapperMap.values()) {
+        for (WarehouseDataWrapper warehouseDataWrapper_i : warehouseIdToDataWrapperMap.values()) {
             
-            Integer amountOfEmptyCells = wdw_i.getAmountOfEmptyCells();
+            Integer amountOfEmptyCells = warehouseDataWrapper_i.getAmountOfEmptyCells();
 
             if (amountOfEmptyCells == 0) {
                 continue;
@@ -268,7 +268,7 @@ public class WarehousesDataService {
             if (!amountOfEmptyCellsToWarehouseIdsMap.containsKey(amountOfEmptyCells)) {
                 amountOfEmptyCellsToWarehouseIdsMap.put(amountOfEmptyCells, new List<Id>());
             }
-            amountOfEmptyCellsToWarehouseIdsMap.get(amountOfEmptyCells).add(wdw_i.warehouseId);
+            amountOfEmptyCellsToWarehouseIdsMap.get(amountOfEmptyCells).add(warehouseDataWrapper_i.warehouseId);
         }
 
         if (amountOfEmptyCellsToWarehouseIdsMap.isEmpty()) {

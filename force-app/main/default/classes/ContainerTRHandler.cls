@@ -7,26 +7,31 @@ public with sharing class ContainerTRHandler {
         switch on triggerEvent {
             
             when BEFORE_INSERT {
-                System.debug('BEFORE_INSERT');
+                System.debug('ContainerTRHandler => BEFORE_INSERT');
                 ContainerTRDispatcher.populateValuesOnArrival(newList);
                 ContainerTRDispatcher.assignContacts(newList);
                 ContainerTRDispatcher.distributeContainersForShipment(newList);
             }
             when AFTER_INSERT {
+                System.debug('ContainerTRHandler => AFTER_INSERT');
                 ContainerTRDispatcher.scheduleContactAssignmentJob();
                 ContainerTRDispatcher.changeCellAvailability(newList, null);
             }
             when BEFORE_UPDATE {
+                System.debug('ContainerTRHandler => BEFORE_UPDATE');
                 ContainerTRDispatcher.removeContainersFromWarehouseAfterDeliveryShipment(newList, oldMap);
             }
             when AFTER_UPDATE {
+                System.debug('ContainerTRHandler => AFTER_UPDATE');
                 ContainerTRDispatcher.changeCellAvailability(newList, oldMap);
                 ContainerTRDispatcher.scheduleBufferDistributionJob();
             }
             when AFTER_DELETE {
+                System.debug('ContainerTRHandler => AFTER_DELETE');
                 ContainerTRDispatcher.changeCellAvailability(oldMap.values(), null);
             }
             when AFTER_UNDELETE {
+                System.debug('ContainerTRHandler => AFTER_UNDELETE');
                 ContainerTRDispatcher.changeCellAvailability(newList, null);
             }
         }

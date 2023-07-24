@@ -13,9 +13,9 @@ public with sharing class WarehouseTRDispatcher {
 
                 Warehouse__c whOld = oldMap.get(wh_i.Id);
     
-                if (wh_i.Width__c != whOld.Width__c ||
-                        wh_i.Length__c != whOld.Length__c ||
-                        wh_i.Level__c != whOld.Level__c) {
+                if (wh_i.Width__c != whOld.Width__c
+                        || wh_i.Length__c != whOld.Length__c
+                        || wh_i.Level__c != whOld.Level__c) {
                     warehousesToCreateCells.add(wh_i);
                 }
             }
