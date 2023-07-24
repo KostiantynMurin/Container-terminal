@@ -31,14 +31,14 @@ public class WarehouseDataWrapper {
 
             cellAddressToIdMap.put(cell_i.Address__c, cell_i.Id);
 
-            CellDataWrapper cdw = new CellDataWrapper(cell_i);
+            CellDataWrapper cellDataWrapper = new CellDataWrapper(cell_i);
 
-            if (cdw.getContainer() == null) {
-                orderedListOfEmptyCellsAddresses.add(cdw.getAddress());
-                emptyCellsMap.put(cdw.cellId, cdw);
+            if (cellDataWrapper.getContainer() == null) {
+                orderedListOfEmptyCellsAddresses.add(cellDataWrapper.getAddress());
+                emptyCellsMap.put(cellDataWrapper.cellId, cellDataWrapper);
             }
             
-            cellIdToDataWrapperMap.put(cdw.cellId, cdw);
+            cellIdToDataWrapperMap.put(cellDataWrapper.cellId, cellDataWrapper);
         }
 
         orderedListOfEmptyCellsAddresses.sort();
@@ -62,23 +62,23 @@ public class WarehouseDataWrapper {
         CellDataWrapper firstLevelCell = null;
         CellDataWrapper cellWithPreviousCellWithBiggestOrEqualsDateOfIssue = null;
 
-        for (CellDataWrapper cdw_i : emptyCellsMap.values()) {
+        for (CellDataWrapper cellDataWrapper_i : emptyCellsMap.values()) {
             
-            if (cdw_i.getLevel() == 1) {
+            if (cellDataWrapper_i.getLevel() == 1) {
 
                 if (firstLevelCell == null) {
-                    firstLevelCell = cdw_i;
+                    firstLevelCell = cellDataWrapper_i;
                 }
                 continue;
             }
 
-            CellDataWrapper previousCell = getPreviousCell(cdw_i);
+            CellDataWrapper previousCell = getPreviousCell(cellDataWrapper_i);
 
-            if (previousCell != null &&
-                        !previousCell.isContainerForShipment() &&
-                        ((previousCell.getContainersDateOfIssue() == null && previousCell.getContainer() != null) || 
-                            (previousCell.getContainersDateOfIssue() != null && previousCell.getContainersDateOfIssue() <= dateOfIssue))) {
-                    cellWithPreviousCellWithBiggestOrEqualsDateOfIssue = cdw_i;
+            if (previousCell != null
+                        && !previousCell.isContainerForShipment()
+                        && ((previousCell.getContainersDateOfIssue() == null && previousCell.getContainer() != null)
+                            || (previousCell.getContainersDateOfIssue() != null && previousCell.getContainersDateOfIssue() >= dateOfIssue))) {
+                    cellWithPreviousCellWithBiggestOrEqualsDateOfIssue = cellDataWrapper_i;
                 break;
             }
         }
@@ -103,20 +103,20 @@ public class WarehouseDataWrapper {
         CellDataWrapper firstLevelCell = null;
         CellDataWrapper cellWithPreviousCellForShipment = null;
 
-        for (CellDataWrapper cdw_i : emptyCellsMap.values()) {
+        for (CellDataWrapper cellDataWrapper_i : emptyCellsMap.values()) {
             
-            if (cdw_i.getLevel() == 1) {
+            if (cellDataWrapper_i.getLevel() == 1) {
 
                 if (firstLevelCell == null) {
-                    firstLevelCell = cdw_i;
+                    firstLevelCell = cellDataWrapper_i;
                 }
                 continue;
             }
 
-            CellDataWrapper previousCell = getPreviousCell(cdw_i);
+            CellDataWrapper previousCell = getPreviousCell(cellDataWrapper_i);
 
             if (previousCell != null && previousCell.isContainerForShipment()) {
-                cellWithPreviousCellForShipment = cdw_i;
+                cellWithPreviousCellForShipment = cellDataWrapper_i;
                 break;
             }
         }
@@ -136,30 +136,30 @@ public class WarehouseDataWrapper {
         return orderedListOfEmptyCellsAddresses.size();
     }
 
-    public void placeContainerToCell(Container__c container, CellDataWrapper cdw) {
+    public void placeContainerToCell(Container__c container, CellDataWrapper cellDataWrapper) {
 
-        container.Warehouse_Cell__c = cdw.cellId;
+        container.Warehouse_Cell__c = cellDataWrapper.cellId;
 
-        cellIdToDataWrapperMap.get(cdw.cellId).setContainer(container);
-        emptyCellsMap.remove(cdw.cellId);
+        cellIdToDataWrapperMap.get(cellDataWrapper.cellId).setContainer(container);
+        emptyCellsMap.remove(cellDataWrapper.cellId);
 
-        Integer elementIndex = orderedListOfEmptyCellsAddresses.indexOf(cdw.getAddress());
+        Integer elementIndex = orderedListOfEmptyCellsAddresses.indexOf(cellDataWrapper.getAddress());
         if (elementIndex != -1) {
             orderedListOfEmptyCellsAddresses.remove(elementIndex);
             orderedListOfEmptyCellsAddresses.sort();
         }
     }
 
-    public void removeContainerFromCell(Container__c container, CellDataWrapper cdw) {
+    public void removeContainerFromCell(Container__c container, CellDataWrapper cellDataWrapper) {
 
         container.Warehouse_Cell__c = null;
 
-        cellIdToDataWrapperMap.get(cdw.cellId).setContainer(null);
-        emptyCellsMap.put(cdw.cellId, cdw);
+        cellIdToDataWrapperMap.get(cellDataWrapper.cellId).setContainer(null);
+        emptyCellsMap.put(cellDataWrapper.cellId, cellDataWrapper);
         
-        Integer elementIndex = orderedListOfEmptyCellsAddresses.indexOf(cdw.getAddress());
+        Integer elementIndex = orderedListOfEmptyCellsAddresses.indexOf(cellDataWrapper.getAddress());
         if (elementIndex == -1) {
-            orderedListOfEmptyCellsAddresses.add(cdw.getAddress());
+            orderedListOfEmptyCellsAddresses.add(cellDataWrapper.getAddress());
             orderedListOfEmptyCellsAddresses.sort();
         }
     }

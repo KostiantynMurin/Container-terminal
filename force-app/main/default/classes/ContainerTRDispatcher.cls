@@ -78,8 +78,8 @@ public with sharing class ContainerTRDispatcher {
 
             Container__c oldContainer = oldMap.get(container_i.Id);
 
-            if ((container_i.Status__c == 'Delivered' && oldContainer.Status__c == 'Waiting For Delivery') ||
-                    (container_i.Status__c == 'Shipped' && oldContainer.Status__c == 'Waiting For Shipment')) {
+            if ((container_i.Status__c == 'Delivered' && oldContainer.Status__c == 'Waiting For Delivery')
+                    || (container_i.Status__c == 'Shipped' && oldContainer.Status__c == 'Waiting For Shipment')) {
                 
                 if (!warehouseIdToMapOfCellAddressToContainerMap.containsKey(container_i.Warehouse_Id__c)) {
                     warehouseIdToMapOfCellAddressToContainerMap.put(container_i.Warehouse_Id__c, new Map<String, Container__c>());
@@ -120,24 +120,14 @@ public with sharing class ContainerTRDispatcher {
 
         for (Container__c container_i : processingRecords) {
             
-            if (oldMap == null) {
+            if (oldMap == null || container_i.Warehouse_Cell__c != oldMap.get(container_i.Id).Warehouse_Cell__c) {
 
                 if (container_i.Warehouse_Cell__c != null) {
                     cellIdsToUpdate.add(container_i.Warehouse_Cell__c);
                 }
-            } else {
-                
-                Container__c oldContainer = oldMap.get(container_i.Id);
 
-                if (container_i.Warehouse_Cell__c != oldContainer.Warehouse_Cell__c) {
-
-                    if (container_i.Warehouse_Cell__c != null) {
-                        cellIdsToUpdate.add(container_i.Warehouse_Cell__c);
-                    }
-
-                    if (oldContainer.Warehouse_Cell__c != null) {
-                        cellIdsToUpdate.add(oldContainer.Warehouse_Cell__c);   
-                    }
+                if (oldMap != null && oldMap.get(container_i.Id).Warehouse_Cell__c != null) {
+                    cellIdsToUpdate.add(oldMap.get(container_i.Id).Warehouse_Cell__c);   
                 }
             }
         }
@@ -152,8 +142,9 @@ public with sharing class ContainerTRDispatcher {
     public static void scheduleBufferDistributionJob() {
         System.debug('ContainerTRDispatcher => scheduleBufferDistributionJob');
 
-        if (ContainerTRUtil.getAmountOfContainersInBufferZone() == 0 ||
-                WarehouseTRUtil.getAmountOfEmptyCells() == 0) {
+        if (System.isFuture() || System.isBatch() || System.isScheduled()
+                || ContainerTRUtil.getAmountOfContainersInBufferZone() == 0
+                || WarehouseUtil.getAmountOfEmptyCells() == 0) {
             return;
         }
 

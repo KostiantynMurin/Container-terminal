@@ -101,7 +101,7 @@ public with sharing class ContainerTRService {
                                     , (SELECT Id FROM Containers__r LIMIT 1)
                                FROM Cell__c
                                WHERE Id IN: cellIdsToUpdate
-                               AND Warehouse__r.RecordTypeId =: WarehouseTRUtil.warehouseRTId]) {
+                               AND Warehouse__r.RecordTypeId =: WarehouseUtil.warehouseRTId]) {
             
             Boolean isEmptyNewValue = cell_i.Containers__r.isEmpty();
 

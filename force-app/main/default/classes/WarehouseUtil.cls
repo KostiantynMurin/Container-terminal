@@ -1,4 +1,4 @@
-public with sharing class WarehouseTRUtil {
+public with sharing class WarehouseUtil {
     
     //in order to convert width into the corresponding letter
     public static final Integer ASCII_CHARACTER_BASE = 64;

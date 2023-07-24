@@ -7,11 +7,11 @@ public with sharing class WarehouseTRHandler {
         switch on triggerEvent {
             
             when AFTER_INSERT {
-                System.debug('AFTER_INSERT');
+                System.debug('WarehouseTRHandler => AFTER_INSERT');
                 WarehouseTRDispatcher.createCells(newList, null);
             }
             when AFTER_UPDATE {
-                System.debug('AFTER_UPDATE');
+                System.debug('WarehouseTRHandler => AFTER_UPDATE');
                 WarehouseTRDispatcher.updateCellsNames(newList, oldMap);
                 WarehouseTRDispatcher.createCells(newList, oldMap);
             }

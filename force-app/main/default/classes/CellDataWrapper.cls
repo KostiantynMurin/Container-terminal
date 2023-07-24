@@ -3,8 +3,8 @@ public class CellDataWrapper {
     public Id cellId;
     public Id warehouseId;
     public Boolean isBufferZoneCell;
+    public Container__c container;
     private Cell__c cell;
-    private Container__c container;
 
     public CellDataWrapper(Cell__c cell) {
         this.cellId = cell.Id;
@@ -15,7 +15,7 @@ public class CellDataWrapper {
             this.container = cell.Containers__r.get(0);
         }
 
-        this.isBufferZoneCell = (cell.Warehouse__r.RecordTypeId == WarehouseTRUtil.bufferZoneRTId);
+        this.isBufferZoneCell = (cell.Warehouse__r.RecordTypeId == WarehouseUtil.bufferZoneRTId);
     }
 
     public void setContainer(Container__c container) {
@@ -55,7 +55,7 @@ public class CellDataWrapper {
             return null;
         }
 
-        return WarehouseTRUtil.getCellAddress(getWidth(), getLength(), level - 1);
+        return WarehouseUtil.getCellAddress(getWidth(), getLength(), level - 1);
     }
 
     public String getAddressOfTheNextCell(Integer warehouseMaxLevel) {
@@ -65,7 +65,7 @@ public class CellDataWrapper {
             return null;
         }
 
-        return WarehouseTRUtil.getCellAddress(getWidth(), getLength(), level + 1);
+        return WarehouseUtil.getCellAddress(getWidth(), getLength(), level + 1);
     }
 
     public Integer getLevel() {

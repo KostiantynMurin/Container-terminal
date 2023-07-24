@@ -96,19 +96,19 @@ public class ContactsCreationBatch implements Database.Batchable<sObject>, Sched
                 return contacts;
             }
 
-            for (ContactWrapper cw_i : results) {
+            for (ContactWrapper contactWrapper_i : results) {
 
                 Contact cont = new Contact(
-                    FirstName = cw_i.nameParam.first,
-                    LastName = cw_i.nameParam.last,
-                    Email = cw_i.email,
-                    Phone = cw_i.phone,
-                    MobilePhone = cw_i.cell,
-                    MailingCountry = cw_i.location.country,
-                    MailingState = cw_i.location.state,
-                    MailingCity = cw_i.location.city,
-                    MailingPostalCode = cw_i.location.postCode,
-                    MailingStreet = cw_i.location.street.getStreet()
+                    FirstName = contactWrapper_i.nameParam.first,
+                    LastName = contactWrapper_i.nameParam.last,
+                    Email = contactWrapper_i.email,
+                    Phone = contactWrapper_i.phone,
+                    MobilePhone = contactWrapper_i.cell,
+                    MailingCountry = contactWrapper_i.location.country,
+                    MailingState = contactWrapper_i.location.state,
+                    MailingCity = contactWrapper_i.location.city,
+                    MailingPostalCode = contactWrapper_i.location.postCode,
+                    MailingStreet = contactWrapper_i.location.street.getStreet()
                 );
 
                 contacts.add(cont);

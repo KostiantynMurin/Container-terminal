@@ -1,4 +1,4 @@
-public class BufferContainerDistributionBatch implements Database.Batchable<sObject>, Schedulable, Database.Stateful {
+public class BufferContainerDistributionBatch implements Database.Batchable<sObject>, Schedulable {
 
     private String query = 'SELECT Id'
                               + ', Status__c'
@@ -7,7 +7,6 @@ public class BufferContainerDistributionBatch implements Database.Batchable<sObj
     private String condition;
     private String order = ' ORDER BY Status__c, Date_Of_Issue__c ASC NULLS LAST';
     private Id bufferZoneRTId;
-    private WarehousesDataService whDataService;
 
     public BufferContainerDistributionBatch() {
         this.query += ' WHERE Warehouse_Cell__r.Warehouse__r.RecordTypeId =: bufferZoneRTId';
@@ -31,14 +30,14 @@ public class BufferContainerDistributionBatch implements Database.Batchable<sObj
 
     public Database.QueryLocator start(Database.BatchableContext bc) {
 
-        this.bufferZoneRTId = WarehouseTRUtil.bufferZoneRTId;
-
-        this.whDataService = WarehousesDataService.getInstance();
-
+        this.bufferZoneRTId = WarehouseUtil.bufferZoneRTId;
         return Database.getQueryLocator(query);
     }
 
     public void execute(Database.BatchableContext bc, List<Container__c> scope) {
+
+        System.debug('scope : ' + scope);
+        WarehousesDataService whDataService = WarehousesDataService.getInstance();
 
         Map<Id, Container__c> containersToUpdate = new Map<Id, Container__c>();
 
