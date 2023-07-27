@@ -1,4 +1,4 @@
-public class PopulateContainersWithContactsBatch implements Database.Batchable<sObject>, Database.Stateful, Database.AllowsCallouts, Schedulable {
+public class Container_PopulateWithContactBatch implements Database.Batchable<sObject>, Database.Stateful, Database.AllowsCallouts, Schedulable {
 	private List<Contact> contactToInsertList = new List<Contact>();
 
 	public Database.QueryLocator start(Database.BatchableContext bc) {
@@ -10,7 +10,7 @@ public class PopulateContainersWithContactsBatch implements Database.Batchable<s
 	}
 
 	public void execute(SchedulableContext SC) {
-		Database.executeBatch(new PopulateContainersWithContactsBatch(), 90);
+		Database.executeBatch(new Container_PopulateWithContactBatch(), 90);
 	}
 
 	public void execute(Database.BatchableContext bc, List<Container__c> records) {
@@ -48,7 +48,7 @@ public class PopulateContainersWithContactsBatch implements Database.Batchable<s
 					Description = randomUser.nat
 				);
 
-				contactToInsertList.add(contact);
+				this.contactToInsertList.add(contact);
 			}
 		} catch (Exception ex) {
 			LogManager.getInstance().generateLogByException(ex);
@@ -58,42 +58,40 @@ public class PopulateContainersWithContactsBatch implements Database.Batchable<s
 	}
 
 	public void finish(Database.BatchableContext bc) {
-		if (!contactToInsertList.isEmpty()) {
-			insert contactToInsertList;
+		if (!this.contactToInsertList.isEmpty()) {
+			insert this.contactToInsertList;
 
 			this.populateContainersWithNewContact();
 		}
 	}
 
 	private void populateContainersWithNewContact() {
-		if (!contactToInsertList.isEmpty()) {
-			Map<String, Contact> externalContactIdToContactMap = new Map<String, Contact>();
-			for (Contact contact_i : contactToInsertList) {
-				externalContactIdToContactMap.put(contact_i.External_ID_Container__c, contact_i);
-			}
+		Map<String, Contact> externalContactIdToContactMap = new Map<String, Contact>();
+		for (Contact contact_i : this.contactToInsertList) {
+			externalContactIdToContactMap.put(contact_i.External_ID_Container__c, contact_i);
+		}
 
-			Map<Id, Container__c> containerMap = new Map<Id, Container__c>(
-				[
-					SELECT Id
-					FROM Container__c
-					WHERE External_Contact_ID__c IN :externalContactIdToContactMap.keySet()
-				]
-			);
+		Map<Id, Container__c> containerMap = new Map<Id, Container__c>(
+			[
+				SELECT Id
+				FROM Container__c
+				WHERE External_Contact_ID__c IN :externalContactIdToContactMap.keySet()
+			]
+		);
 
-			Map<Id, Container__c> containerToUpdateMap = new Map<Id, Container__c>();
-			for (Id containerId_i : containerMap.keySet()) {
-				Container__c container_i = containerMap.get(containerId_i);
-				container_i.Contact__c = externalContactIdToContactMap.get(
-						container_i.External_Contact_ID__c
-					)
-					.Id;
+		Map<Id, Container__c> containerToUpdateMap = new Map<Id, Container__c>();
+		for (Id containerId_i : containerMap.keySet()) {
+			Container__c container_i = containerMap.get(containerId_i);
+			container_i.Contact__c = externalContactIdToContactMap.get(
+					container_i.External_Contact_ID__c
+				)
+				.Id;
 
-				containerToUpdateMap.put(containerId_i, container_i);
-			}
+			containerToUpdateMap.put(containerId_i, container_i);
+		}
 
-			if (!containerToUpdateMap.isEmpty()) {
-				update containerToUpdateMap.values();
-			}
+		if (!containerToUpdateMap.isEmpty()) {
+			update containerToUpdateMap.values();
 		}
 	}
 }
