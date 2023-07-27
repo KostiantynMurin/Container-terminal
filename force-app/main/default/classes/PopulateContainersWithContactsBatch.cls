@@ -1,17 +1,19 @@
-public class RandomUser_ObtainContactBatch implements Database.Batchable<String>, Database.Stateful, Database.AllowsCallouts {
-	private Set<String> externalContactIDSet;
-
+public class PopulateContainersWithContactsBatch implements Database.Batchable<sObject>, Database.Stateful, Database.AllowsCallouts, Schedulable {
 	private List<Contact> contactToInsertList = new List<Contact>();
 
-	public RandomUser_ObtainContactBatch(Set<String> pExternalContactIDSet) {
-		this.externalContactIDSet = pExternalContactIDSet;
+	public Database.QueryLocator start(Database.BatchableContext bc) {
+		return Database.getQueryLocator(
+			'SELECT Id, External_Contact_ID__c' +
+				'FROM Container__c ' +
+				'WHERE Contact__c = NULL AND External_Contact_ID__c != NULL'
+		);
 	}
 
-	public System.Iterable<String> start(Database.BatchableContext bc) {
-		return new List<String>(externalContactIDSet);
+	public void execute(SchedulableContext SC) {
+		Database.executeBatch(new PopulateContainersWithContactsBatch(), 90);
 	}
 
-	public void execute(Database.BatchableContext bc, List<String> records) {
+	public void execute(Database.BatchableContext bc, List<Container__c> records) {
 		RandomUser_CalloutService randomUser_CalloutService = new RandomUser_CalloutService();
 
 		try {
@@ -24,12 +26,12 @@ public class RandomUser_ObtainContactBatch implements Database.Batchable<String>
 			);
 
 			Integer i = 0;
-			for (String externalContactID_i : records) {
+			for (Container__c container_i : records) {
 				RandomUser_Wrappers.Result randomUser = usersWrapper.results.get(i);
 				i++;
 
 				Contact contact = new Contact(
-					External_ID_Container__c = externalContactID_i,
+					External_ID_Container__c = container_i.External_Contact_ID__c,
 					FirstName = randomUser.name.first,
 					LastName = randomUser.name.last,
 					Email = randomUser.email,
