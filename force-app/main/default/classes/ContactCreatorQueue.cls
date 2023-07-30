@@ -1,40 +1,39 @@
 public with sharing class ContactCreatorQueue implements Queueable, Database.AllowsCallouts {
-    Set<String> externalIds;
+    Set<String> externalIdSet;
     
-    public ContactCreatorQueue(Set<String> externalIds) {
-        this.externalIds = externalIds;
+    public ContactCreatorQueue(Set<String> extIdSet) {
+        externalIdSet = extIdSet;
     }
 
     public void execute(QueueableContext context) {
-        Set<String> extIdsForNextQueue = new Set<String>();
-        List<Contact> contactsToInsert = new List<Contact>();
-
+        Set<String> extIdsForNextQueue = new Set<String>(); 
+        List<Contact> contactsToUpdate = new List<Contact>();
+        Set<String> contactExtIdSet = new Set<String>();
         // When executing the queue, we perform this check again, 
         // because during the execution of the queue (which may start some time after the trigger), 
         // contacts with such externalIds may have been created by other processes.
-        Map<String, Contact> existingContacts = ContactHelper.getExistingContactsByExtId(externalIds);
+        Map<String, Contact> existingContacts = ContactSelector.getExistingContactsByExtId(externalIdSet);
 
-        for (String extId : externalIds) {
+        for (String extId : externalIdSet) {
             Contact contact = existingContacts.get(extId);
 
             if (contact == null) {
                 if (Limits.getLimitCallouts() - Limits.getCallouts() > 0) {
                     contact = IntegrationService.getContactByExtId(extId);
-                    if (contact != null) {
-                        existingContacts.put(extId, contact);
-                    }
                 } else {
                     extIdsForNextQueue.add(extId);
                 }
             }
 
             if (contact != null && contact.Id == null) {
-                contactsToInsert.add(contact);
+                contactsToUpdate.add(contact);
+                contactExtIdSet.add(contact.ExternalId__c);
             }
         }
 
-        if (!contactsToInsert.isEmpty()){
-            insert contactsToInsert;
+        if (!contactsToUpdate.isEmpty()){
+            upsert contactsToUpdate ExternalId__c;
+            ContainerService.updateContainerContacts(contactExtIdSet);
         }
 
         if (!extIdsForNextQueue.isEmpty()) {
