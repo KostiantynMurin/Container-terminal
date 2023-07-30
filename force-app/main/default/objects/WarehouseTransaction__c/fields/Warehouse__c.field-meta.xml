@@ -4,8 +4,8 @@
     <externalId>false</externalId>
     <label>Warehouse</label>
     <referenceTo>Warehouse__c</referenceTo>
-    <relationshipLabel>Containers</relationshipLabel>
-    <relationshipName>Containers</relationshipName>
+    <relationshipLabel>WarehouseTransactions</relationshipLabel>
+    <relationshipName>WarehouseTransactions</relationshipName>
     <relationshipOrder>0</relationshipOrder>
     <reparentableMasterDetail>false</reparentableMasterDetail>
     <trackHistory>false</trackHistory>
