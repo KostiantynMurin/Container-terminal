@@ -26,6 +26,7 @@ public class ContainerTriggerHandler implements ITriggerHandler {
      * @param oldMap Map<Id, SObject> newMap
      */
     public void beforeUpdate(Map<Id, SObject> newMap, Map<Id, SObject> oldMap) {
+        validateContainerShipment(newMap.values(), oldMap);
         removeContainerCellRelation(newMap.values(), oldMap);
     }
 
@@ -185,5 +186,24 @@ public class ContainerTriggerHandler implements ITriggerHandler {
             );
         }
         DMLExecutor.doUpdate(cellToUpdateList);
+    }
+
+    private void validateContainerShipment(List<Container__c> newList, Map<Id, SObject> oldMap) {
+        Map<Id, Container__c> cellIdToContainerMap = new Map<Id, Container__c>();
+        for (Container__c container : newList) {
+            if (container.Status__c != oldMap.get(container.Id).get('Status__c') && container.Status__c == 'Issued') {
+                cellIdToContainerMap.put(container.Warehouse_Cell__c, container);
+            }
+        }
+        if (cellIdToContainerMap.isEmpty()) {
+            return;
+        }
+        for (Warehouse_Cell__c cell : [SELECT Id, Upstream_Cell__r.Is_Empty__c 
+                                       FROM Warehouse_Cell__c 
+                                       WHERE Id IN :cellIdToContainerMap.keySet()]) {
+            if (cell.Upstream_Cell__c != null && !cell.Upstream_Cell__r.Is_Empty__c) {
+                cellIdToContainerMap.get(cell.Id).addError('Status__c', Label.Container_Is_Blocked);
+            }
+        }
     }
 }

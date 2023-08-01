@@ -61,12 +61,12 @@ public with sharing class ContainerDistributorService {
         List<Warehouse_Cell__c> cellsToUpdate = new List<Warehouse_Cell__c>();
         List<Container__c> containersToUpdate = new List<Container__c>();
 
-        for (Integer i = 0; i < warehouseStructure.getWidth(); i++) {
-            for (Integer j = 0; j < warehouseStructure.getLength(); j++) {
-                for (Integer k = 0; k < warehouseStructure.getMaxCellLevel(); k++) {
-                    Warehouse_Cell__c currentCell = warehouseMatrix[i][j][k];
-                    Warehouse_Cell__c downstreamCell = k == 0 ? null : warehouseMatrix[i][j][k - 1];
-                    Boolean isTopCell = k == warehouseStructure.getMaxCellLevel() - 1;
+        for (Integer width = 0; width < warehouseStructure.getWidth(); width++) {
+            for (Integer length = 0; length < warehouseStructure.getLength(); length++) {
+                for (Integer maxCellLevel = 0; maxCellLevel < warehouseStructure.getMaxCellLevel(); maxCellLevel++) {
+                    Warehouse_Cell__c currentCell = warehouseMatrix[width][length][maxCellLevel];
+                    Warehouse_Cell__c downstreamCell = maxCellLevel == 0 ? null : warehouseMatrix[width][length][maxCellLevel - 1];
+                    Boolean isTopCell = maxCellLevel == warehouseStructure.getMaxCellLevel() - 1;
 
                     if (newContainerList.isEmpty()) {
                         break;

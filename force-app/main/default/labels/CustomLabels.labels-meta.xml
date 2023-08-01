@@ -28,4 +28,11 @@
         <shortDescription>JSON Parser Error Message</shortDescription>
         <value>{0} consuming unrecognized property: {1}</value>
     </labels>
+    <labels>
+        <fullName>Container_Is_Blocked</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Container is blocked</shortDescription>
+        <value>Container is blocked</value>
+    </labels>
 </CustomLabels>
