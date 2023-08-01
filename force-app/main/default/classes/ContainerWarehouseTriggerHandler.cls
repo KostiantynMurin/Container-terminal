@@ -42,6 +42,7 @@ public class ContainerWarehouseTriggerHandler  implements ITriggerHandler {
      */
     public void afterInsert(Map<Id, SObject> newMap) {
         generateWarehouseCellEntries((List<Container_Warehouse__c>)newMap.values());
+        publishPlatformEvent(newMap);
     }
 
     /**
@@ -53,6 +54,7 @@ public class ContainerWarehouseTriggerHandler  implements ITriggerHandler {
      */
     public void afterUpdate(Map<Id, SObject> newMap, Map<Id, SObject> oldMap) {
         generateWarehouseCellEntries(newMap, oldMap);
+        publishPlatformEvent(newMap);
     }
 
     /**
@@ -92,17 +94,20 @@ public class ContainerWarehouseTriggerHandler  implements ITriggerHandler {
         for (Container_Warehouse__c containerWarehouse : newList) {
             createCellEntries(containerWarehouse, warehouseCellToInsertList);
         }
-        DMLExecutor.doUpsert(warehouseCellToInsertList, Warehouse_Cell__c.Address__c);
+        DMLExecutor.doUpsert(warehouseCellToInsertList, Warehouse_Cell__c.Unique_Address__c);
     }
 
     private static void createCellEntries(Container_Warehouse__c containerWarehouse, List<Warehouse_Cell__c> warehouseCellToInsertList) {
         for (Integer widthAxis = 1; widthAxis <= containerWarehouse.Width__c; widthAxis++) {
             for (Integer lengthAxis = 1; lengthAxis <= containerWarehouse.Length__c; lengthAxis++) {
                 for (Integer level = 1; level <= containerWarehouse.Max_Cell_Level__c; level++) {
+                    String cellAddress = getCellAddress(widthAxis, lengthAxis, level);
                     warehouseCellToInsertList.add(
                         new Warehouse_Cell__c(
+                            Name = containerWarehouse.Name + '-' + cellAddress,
                             Container_Warehouse__c = containerWarehouse.Id,
-                            Address__c = getCellAddress(widthAxis, lengthAxis, level),
+                            Address__c = cellAddress,
+                            Unique_Address__c = containerWarehouse.Name + '-' + cellAddress,
                             Level__c = level
                         )
                     );
@@ -141,5 +146,9 @@ public class ContainerWarehouseTriggerHandler  implements ITriggerHandler {
                 }
             }
         }
+    }
+
+    private void publishPlatformEvent(Map<Id, SObject> newMap){
+        PlatformEventBuilder.publishContainerWarehouseUpdateEvent(newMap.keySet());
     }
 }

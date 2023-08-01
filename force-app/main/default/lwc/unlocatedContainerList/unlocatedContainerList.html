@@ -1,0 +1,13 @@
+<template>
+    <h2>Unlocated Containers</h2>
+    <div style="width: 450px;">
+        <template if:true={unlocatedContainerList}>
+             <lightning-datatable
+                     key-field="id"
+                     data={unlocatedContainerList}
+                     columns={columns}
+                     hide-checkbox-column>
+             </lightning-datatable>
+        </template>
+        </div>
+</template>
